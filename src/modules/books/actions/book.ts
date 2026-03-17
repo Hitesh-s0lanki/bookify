@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { VOICE_PERSONAS, type VoicePersona } from "@/constants/voice-personas";
+import { VOICE_PERSONAS, type VoicePersona } from "@/modules/books/constants";
 import { connectToDatabase } from "@/lib/db";
 import { extractTextFromPdf } from "@/lib/pdf";
-import { createVapiAssistant } from "@/lib/vapi";
-import { BookModel } from "@/models/book";
+import { createVapiAssistant } from "@/lib/api/vapi";
+import { BookModel } from "@/modules/books/model";
 
 export async function createBookAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();

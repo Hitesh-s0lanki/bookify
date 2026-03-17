@@ -1,7 +1,7 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Navbar } from "@/components/layout/navbar";
+import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Bookify",
   description: "Your personal AI-enhanced reading library",
+  icons: {
+    icon: ["/logo.png"],
+  },
 };
 
 export default function RootLayout({
@@ -25,19 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <Providers>
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <div className="min-h-screen bg-background">
-            <Navbar />
-            <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-              {children}
-            </main>
-          </div>
+          {children}
+          <Toaster richColors position="top-center" />
         </body>
       </html>
-    </ClerkProvider>
+    </Providers>
   );
 }

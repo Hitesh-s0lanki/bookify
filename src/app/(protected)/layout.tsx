@@ -1,5 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 
+import { AppShell } from "@/components/layout/app-shell";
+
 export default async function ProtectedLayout({
   children,
 }: {
@@ -7,5 +9,5 @@ export default async function ProtectedLayout({
 }) {
   await auth.protect();
 
-  return children;
+  return <AppShell>{children}</AppShell>;
 }
