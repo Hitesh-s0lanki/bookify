@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/db";
 import { chunkTextByPages } from "@/lib/chunker";
 import { generateEmbeddings } from "@/lib/api/embeddings";
+import { generateGetPresignedUrl } from "@/lib/api/s3";
 import {
   deleteChunksForBook,
   insertChunksWithEmbeddings,
@@ -29,15 +30,25 @@ export async function processBookDirect(payload: {
 
     let pdfBase64: string;
     if (book.pdfBuffer) {
-      pdfBase64 = Buffer.from(book.pdfBuffer).toString("base64");
+      // .lean() returns BSON Binary instead of Node.js Buffer — extract raw bytes
+      const raw = book.pdfBuffer;
+      const buf = Buffer.isBuffer(raw)
+        ? raw
+        : Buffer.from((raw as { buffer: Uint8Array }).buffer ?? raw);
+      pdfBase64 = buf.toString("base64");
     } else {
-      const response = await fetch(pdfUrl);
+      // Generate a signed URL since the bucket isn't public
+      const s3Key = extractS3Key(pdfUrl);
+      const fetchUrl = s3Key
+        ? await generateGetPresignedUrl({ key: s3Key })
+        : pdfUrl;
+      const response = await fetch(fetchUrl);
       if (!response.ok)
         throw new Error(`Failed to download PDF: ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
       if (arrayBuffer.byteLength === 0)
         throw new Error(
-          `PDF download returned 0 bytes from ${pdfUrl}. Check S3 bucket access and CORS.`
+          `PDF download returned 0 bytes. Check S3 bucket access.`
         );
       pdfBase64 = Buffer.from(arrayBuffer).toString("base64");
     }
@@ -91,13 +102,47 @@ export async function processBookDirect(payload: {
 
     return { bookId, chunksInserted: chunks.length };
   } catch (error) {
-    // Mark book as failed on any error
+    // Log the full error for debugging, store a user-friendly message in the DB
+    console.error(`[process-book] Book ${bookId} failed:`, error);
+    const failureReason = toUserFriendlyError(error);
     try {
       await connectToDatabase();
-      await BookModel.updateOne({ _id: bookId }, { status: "FAILED" });
+      await BookModel.updateOne(
+        { _id: bookId },
+        { status: "FAILED", failureReason }
+      );
     } catch {
       // Ignore cleanup errors
     }
     throw error;
   }
+}
+
+function extractS3Key(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("amazonaws.com")) {
+      return decodeURIComponent(parsed.pathname.slice(1));
+    }
+  } catch {
+    // Not a valid URL
+  }
+  return null;
+}
+
+/** Map raw errors to short, user-friendly messages */
+function toUserFriendlyError(error: unknown): string {
+  const msg = error instanceof Error ? error.message : "";
+
+  if (msg.includes("PDF is empty") || msg.includes("0 bytes"))
+    return "The uploaded PDF appears to be empty or corrupted.";
+  if (msg.includes("Failed to download PDF"))
+    return "Could not download the PDF file. Please try re-uploading.";
+  if (msg.includes("text extraction returned empty"))
+    return "Could not extract any text from this PDF.";
+  if (msg.includes("No chunks generated"))
+    return "The PDF did not contain enough text to process.";
+
+  // Everything else (DB errors, embedding errors, etc.) — keep it generic
+  return "Internal server error. Please try again later.";
 }

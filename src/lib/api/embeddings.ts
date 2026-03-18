@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const BATCH_SIZE = 100;
+const OUTPUT_DIMENSIONS = 768;
 const MAX_EMBEDDING_CACHE_SIZE = 200;
 
 const queryEmbeddingCache = new Map<string, number[]>();
@@ -10,7 +11,7 @@ function getEmbeddingModel() {
   if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "text-embedding-004" });
+  return genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 }
 
 function normalizeQuestionForCache(question: string) {
@@ -33,7 +34,10 @@ function setQueryEmbeddingCache(key: string, embedding: number[]) {
 
 export async function generateEmbedding(text: string): Promise<number[]> {
   const model = getEmbeddingModel();
-  const result = await model.embedContent(text);
+  const result = await model.embedContent({
+    content: { role: "user", parts: [{ text }] },
+    outputDimensionality: OUTPUT_DIMENSIONS,
+  } as Parameters<typeof model.embedContent>[0]);
   return result.embedding.values;
 }
 
@@ -60,6 +64,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
     const result = await model.batchEmbedContents({
       requests: batch.map((text) => ({
         content: { role: "user", parts: [{ text }] },
+        outputDimensionality: OUTPUT_DIMENSIONS,
       })),
     });
     allEmbeddings.push(...result.embeddings.map((e) => e.values));

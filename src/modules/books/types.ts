@@ -13,4 +13,5 @@ export interface Book {
   description?: string;
   genre?: string;
   tags?: string[];
+  failureReason?: string;
 }

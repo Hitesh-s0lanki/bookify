@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { BookViewer } from "./_components/book-viewer";
@@ -15,20 +15,20 @@ interface BookDetailContentProps {
 
 function BookDetailSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="flex gap-6">
-        <Skeleton className="aspect-3/4 w-48 shrink-0 rounded-lg" />
+    <div className="rounded-xl border p-4 sm:p-6">
+      <div className="flex gap-4 sm:gap-6">
+        <Skeleton className="aspect-[3/4] w-24 shrink-0 rounded-lg sm:w-40" />
         <div className="flex-1 space-y-3">
-          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-6 w-3/4 sm:h-8" />
           <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-1/3" />
-          <div className="mt-4 space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
+          <Skeleton className="mt-2 hidden h-10 w-36 sm:block" />
         </div>
       </div>
-      <Skeleton className="h-12 w-48" />
+      <div className="mt-4 space-y-3">
+        <Skeleton className="h-4 w-1/4" />
+        <Skeleton className="h-16 w-full rounded-lg" />
+      </div>
+      <Skeleton className="mt-4 h-10 w-full sm:hidden" />
     </div>
   );
 }
@@ -66,6 +66,10 @@ export function BookDetailContent({ params }: BookDetailContentProps) {
     };
   }, [id]);
 
+  const handleBookUpdate = useCallback((updated: Book) => {
+    setBook(updated);
+  }, []);
+
   if (loading) return <BookDetailSkeleton />;
   if (notFound || !book) {
     return (
@@ -78,5 +82,5 @@ export function BookDetailContent({ params }: BookDetailContentProps) {
     );
   }
 
-  return <BookViewer book={book} />;
+  return <BookViewer book={book} onBookUpdate={handleBookUpdate} />;
 }

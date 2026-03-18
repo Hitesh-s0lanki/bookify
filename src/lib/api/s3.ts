@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const AWS_REGION = process.env.AWS_REGION;
@@ -88,6 +88,23 @@ export async function uploadFile({
     const responseText = await response.text();
     throw new Error(`S3 upload failed (${response.status}): ${responseText}`);
   }
+}
+
+export async function generateGetPresignedUrl({
+  key,
+  expiresIn = 3600,
+}: {
+  key: string;
+  expiresIn?: number;
+}) {
+  assertS3Config();
+
+  const command = new GetObjectCommand({
+    Bucket: AWS_S3_BUCKET,
+    Key: key,
+  });
+
+  return getSignedUrl(getS3Client(), command, { expiresIn });
 }
 
 export function getPublicS3Url(key: string) {
