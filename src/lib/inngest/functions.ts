@@ -2,6 +2,7 @@ import { NonRetriableError } from "inngest";
 
 import { inngest } from "./client";
 import { connectToDatabase } from "@/lib/db";
+import { generateGetPresignedUrl } from "@/lib/api/s3";
 import { BookModel } from "@/modules/books/model";
 
 export const processBook = inngest.createFunction(
@@ -26,10 +27,20 @@ export const processBook = inngest.createFunction(
       if (!book) throw new NonRetriableError(`Book ${bookId} not found`);
 
       if (book.pdfBuffer) {
-        return Buffer.from(book.pdfBuffer).toString("base64");
+        // .lean() returns BSON Binary instead of Node.js Buffer — extract raw bytes
+        const raw = book.pdfBuffer;
+        const buf = Buffer.isBuffer(raw)
+          ? raw
+          : Buffer.from((raw as { buffer: Uint8Array }).buffer ?? raw);
+        return buf.toString("base64");
       }
 
-      const response = await fetch(pdfUrl);
+      // Generate a signed URL since the bucket isn't public
+      const s3Key = extractS3Key(pdfUrl);
+      const fetchUrl = s3Key
+        ? await generateGetPresignedUrl({ key: s3Key })
+        : pdfUrl;
+      const response = await fetch(fetchUrl);
       if (!response.ok)
         throw new Error(`Failed to download PDF: ${response.status}`);
       const arrayBuffer = await response.arrayBuffer();
@@ -103,8 +114,36 @@ export const handleBookFailure = inngest.createFunction(
     if (!bookId) return;
 
     await step.run("set-failed-status", async () => {
+      const rawMessage =
+        (event.data.error?.message as string) || "";
+      console.error(`[process-book] Book ${bookId} failed:`, rawMessage);
+      // Store a user-friendly message, not raw internals
+      const failureReason = rawMessage.includes("PDF is empty") || rawMessage.includes("0 bytes")
+        ? "The uploaded PDF appears to be empty or corrupted."
+        : rawMessage.includes("Failed to download PDF")
+          ? "Could not download the PDF file. Please try re-uploading."
+          : rawMessage.includes("text extraction returned empty")
+            ? "Could not extract any text from this PDF."
+            : rawMessage.includes("No chunks generated")
+              ? "The PDF did not contain enough text to process."
+              : "Internal server error. Please try again later.";
       await connectToDatabase();
-      await BookModel.updateOne({ _id: bookId }, { status: "FAILED" });
+      await BookModel.updateOne(
+        { _id: bookId },
+        { status: "FAILED", failureReason }
+      );
     });
   }
 );
+
+function extractS3Key(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("amazonaws.com")) {
+      return decodeURIComponent(parsed.pathname.slice(1));
+    }
+  } catch {
+    // Not a valid URL
+  }
+  return null;
+}
