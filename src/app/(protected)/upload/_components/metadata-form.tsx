@@ -132,7 +132,6 @@ export function MetadataForm() {
 
     try {
       const formData = new FormData();
-      formData.append("pdf", pdf);
       formData.append("cover", cover);
 
       const response = await fetch("/api/books/extract-metadata", {

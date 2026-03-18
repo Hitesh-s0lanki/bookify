@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "100mb",
     },
+    proxyClientMaxBodySize: 60 * 1024 * 1024, // 60 MB for PDF + cover upload
   },
   images: {
     remotePatterns: [
@@ -16,6 +17,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "bookify-book-companion.s3.us-east-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "bookify-book-companion.s3.amazonaws.com",
       },
     ],
   },

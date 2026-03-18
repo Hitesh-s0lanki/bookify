@@ -53,6 +53,10 @@ const bookSchema = new Schema(
       type: String,
       default: "",
     },
+    failureReason: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["pending", "ready", "UPLOADED", "PROCESSING", "READY", "FAILED"],

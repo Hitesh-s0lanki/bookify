@@ -4,9 +4,9 @@ import { LibraryContent } from "./library-content";
 /** Composes hero + library; keeps page.tsx as a one-liner entry. */
 export function HomePage() {
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <HeroSection />
-      <section>
+      <section className="pb-20">
         <LibraryContent />
       </section>
     </div>
