@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./providers";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster richColors position="top-center" />
+          {process.env.NODE_ENV === "production" && <Analytics />}
         </body>
       </html>
     </Providers>

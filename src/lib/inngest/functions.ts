@@ -3,6 +3,7 @@ import { NonRetriableError } from "inngest";
 import { inngest } from "./client";
 import { connectToDatabase } from "@/lib/db";
 import { generateGetPresignedUrl } from "@/lib/api/s3";
+import { extractRawTextFromPdfBuffer } from "@/lib/pdf";
 import { BookModel } from "@/modules/books/model";
 
 export const processBook = inngest.createFunction(
@@ -48,24 +49,16 @@ export const processBook = inngest.createFunction(
     });
 
     const text = await step.run("extract-text", async () => {
-      const { PDFParse } = await import("pdf-parse");
       const buffer = Buffer.from(pdfBuffer, "base64");
-      const parser = new PDFParse({ data: buffer });
+      const extractedText = await extractRawTextFromPdfBuffer(buffer);
 
-      try {
-        const parsed = await parser.getText();
-        const extractedText = parsed.text;
-
-        if (!extractedText || extractedText.trim().length === 0) {
-          throw new NonRetriableError(
-            "PDF text extraction returned empty content"
-          );
-        }
-
-        return extractedText;
-      } finally {
-        await parser.destroy();
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new NonRetriableError(
+          "PDF text extraction returned empty content"
+        );
       }
+
+      return extractedText;
     });
 
     const chunks = await step.run("create-chunks", async () => {

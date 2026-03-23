@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/db";
 import { chunkTextByPages } from "@/lib/chunker";
 import { generateEmbeddings } from "@/lib/api/embeddings";
 import { generateGetPresignedUrl } from "@/lib/api/s3";
+import { extractRawTextFromPdfBuffer } from "@/lib/pdf";
 import {
   deleteChunksForBook,
   insertChunksWithEmbeddings,
@@ -61,19 +62,10 @@ export async function processBookDirect(payload: {
       );
     }
 
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: buffer });
+    const text = await extractRawTextFromPdfBuffer(buffer);
 
-    let text: string;
-    try {
-      const parsed = await parser.getText();
-      text = parsed.text;
-
-      if (!text || text.trim().length === 0) {
-        throw new Error("PDF text extraction returned empty content");
-      }
-    } finally {
-      await parser.destroy();
+    if (!text || text.trim().length === 0) {
+      throw new Error("PDF text extraction returned empty content");
     }
 
     // Step 3: Create chunks
