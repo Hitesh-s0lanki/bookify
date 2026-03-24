@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NPM_CONFIG_CACHE: ${{ runner.temp }}/.npm
+
 jobs:
   lint:
     name: Lint
@@ -20,7 +23,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - run: npm ci
 
@@ -35,7 +37,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - run: npm ci
 
@@ -70,7 +71,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - run: npm ci
 
