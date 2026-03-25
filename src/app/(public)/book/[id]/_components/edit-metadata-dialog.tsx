@@ -135,6 +135,7 @@ export function EditMetadataDialog({
               placeholder="Brief description of the book"
               disabled={saving}
               maxLength={3000}
+              label=""
             />
           </div>
         </div>
