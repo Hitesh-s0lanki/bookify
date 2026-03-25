@@ -15,7 +15,12 @@ type CoverUploadProps = {
   disabled?: boolean;
 };
 
-export function CoverUpload({ file, onFileChange, error, disabled }: CoverUploadProps) {
+export function CoverUpload({
+  file,
+  onFileChange,
+  error,
+  disabled,
+}: CoverUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -51,11 +56,15 @@ export function CoverUpload({ file, onFileChange, error, disabled }: CoverUpload
   if (file && preview) {
     return (
       <div className="space-y-1.5">
-        <p className="text-sm font-medium">Cover Image</p>
         <div className="group relative overflow-hidden rounded-xl border-2 border-primary/20 bg-primary/5 p-5 transition-colors hover:border-primary/30">
           <div className="flex items-center gap-4">
             <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border bg-muted">
-              <Image src={preview} alt="Cover preview" fill className="object-cover" />
+              <Image
+                src={preview}
+                alt="Cover preview"
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{file.name}</p>
@@ -81,13 +90,13 @@ export function CoverUpload({ file, onFileChange, error, disabled }: CoverUpload
 
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-medium">Cover Image</p>
       <div
         role="button"
         tabIndex={0}
         onClick={() => !disabled && inputRef.current?.click()}
         onKeyDown={(e) => {
-          if ((e.key === "Enter" || e.key === " ") && !disabled) inputRef.current?.click();
+          if ((e.key === "Enter" || e.key === " ") && !disabled)
+            inputRef.current?.click();
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -115,7 +124,9 @@ export function CoverUpload({ file, onFileChange, error, disabled }: CoverUpload
         <div className="space-y-1">
           <p className="text-sm font-medium">
             Drop your cover image here or{" "}
-            <span className="text-primary underline-offset-4 group-hover:underline">browse</span>
+            <span className="text-primary underline-offset-4 group-hover:underline">
+              browse
+            </span>
           </p>
           <p className="text-xs text-muted-foreground">JPG or PNG</p>
         </div>

@@ -3,22 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  BookOpen,
-  CheckCircle2,
-  Loader2,
-  Library,
-  Sparkles,
-  Tag,
-  Upload,
-  User,
-  Wand2,
-} from "lucide-react";
+import { BookOpen, CheckCircle2, Loader2, Tag, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CoverUpload } from "@/app/(protected)/upload/_components/cover-upload";
 import { PdfUpload } from "@/app/(protected)/upload/_components/pdf-upload";
+import { MarkdownEditor } from "@/components/markdown-editor";
+import { SUMMARY_PROMPT } from "@/modules/summary/constant";
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 const ALLOWED_COVER_TYPES = new Set(["image/jpeg", "image/jpg", "image/png"]);
@@ -60,49 +52,7 @@ function FormSection({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <section
-      className={`space-y-4 border-t border-border/40 pt-6 first:border-t-0 first:pt-0 ${className}`}
-    >
-      {children}
-    </section>
-  );
-}
-
-function StepHeader({
-  step,
-  title,
-  icon: Icon,
-  active,
-}: {
-  step: number;
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
-}) {
-  return (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
-      <span
-        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm ${
-          active
-            ? "border-primary/25 bg-primary/10 text-primary dark:bg-primary/15"
-            : "border-border/80 bg-background/60 text-muted-foreground dark:bg-background/40"
-        }`}
-      >
-        <span
-          className={`flex size-5 items-center justify-center rounded-full text-[10px] font-bold ${
-            active
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {step}
-        </span>
-        <Icon className="size-3.5 shrink-0 opacity-90" aria-hidden />
-        {title}
-      </span>
-    </div>
-  );
+  return <section className={`space-y-4 ${className}`}>{children}</section>;
 }
 
 export function MetadataForm() {
@@ -116,6 +66,7 @@ export function MetadataForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [extracted, setExtracted] = useState(false);
   const [extractionFailed, setExtractionFailed] = useState(false);
+  const [summaryPrompt, setSummaryPrompt] = useState(SUMMARY_PROMPT);
   const extractedRef = useRef(false);
 
   const pdfError = useMemo(() => validatePdfFile(pdfFile), [pdfFile]);
@@ -188,7 +139,14 @@ export function MetadataForm() {
     ) {
       extractMetadata(pdfFile, coverFile);
     }
-  }, [bothFilesReady, pdfFile, coverFile, isExtracting, extractionFailed, extractMetadata]);
+  }, [
+    bothFilesReady,
+    pdfFile,
+    coverFile,
+    isExtracting,
+    extractionFailed,
+    extractMetadata,
+  ]);
 
   // Reset extraction state when files change
   const handlePdfChange = useCallback((file: File | null) => {
@@ -283,10 +241,114 @@ export function MetadataForm() {
 
   return (
     <div className="space-y-0">
-      {/* Step 1 — File Uploads */}
-      <FormSection>
-        <StepHeader step={1} title="Upload files" icon={Upload} active />
-        <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-3 gap-5 p-5">
+        {/* Step 2 — Extraction */}
+        <FormSection className="col-span-2 h-full">
+          {isExtracting && (
+            <div className="flex items-center gap-4 rounded-xl bg-primary/10 px-4 py-4 dark:bg-primary/15 h-full ">
+              <span className="relative flex size-2.5 shrink-0">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/50 opacity-75" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-primary ring-2 ring-primary/30" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  Analyzing your book with AI…
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Extracting title, author, description, genre & tags
+                </p>
+              </div>
+              <Loader2 className="size-5 shrink-0 animate-spin text-primary" />
+            </div>
+          )}
+
+          {hasMetadata && !isExtracting && (
+            <div className="space-y-4 rounded-xl bg-muted/60 shadow p-4 py-6 dark:bg-muted/20">
+              <BookOpen className="mt-1 size-6 shrink-0 text-muted-foreground" />
+              <div className="grid gap-3">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-lg">{metadata.title}</p>
+                    <p className="text-xs">- {metadata.author}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  {metadata.genre && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Genre -
+                      </p>
+                      <span className=" inline-block rounded-full bg-primary/10 px-3 py-0.5 text-xs font-medium text-primary">
+                        {metadata.genre}
+                      </span>
+                    </div>
+                  )}
+
+                  {metadata.tags.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Tags -
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {metadata.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium"
+                          >
+                            <Tag className="size-3" />
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {extractionFailed && !isExtracting && (
+            <div className="flex flex-col items-center gap-3 rounded-xl bg-destructive/10 px-4 py-6 text-center dark:bg-destructive/15">
+              <p className="text-sm font-medium text-destructive">
+                Metadata extraction failed. Please try again.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={!bothFilesReady}
+                onClick={() => {
+                  if (pdfFile && coverFile) {
+                    setExtractionFailed(false);
+                    setError(null);
+                    extractMetadata(pdfFile, coverFile);
+                  }
+                }}
+              >
+                <Wand2 className="size-3.5" />
+                Retry extraction
+              </Button>
+            </div>
+          )}
+
+          {!bothFilesReady &&
+            !hasMetadata &&
+            !isExtracting &&
+            !extractionFailed && (
+              <div className="rounded-xl h-full bg-muted/30  px-8 py-8 text-center dark:bg-muted/15 flex justify-center items-center flex-col border shadow">
+                <p className="text-lg font-medium text-muted-foreground">
+                  Upload both files above to automatically extract metadata
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground/80">
+                  PDF + JPG/PNG — extraction starts as soon as both are set
+                </p>
+              </div>
+            )}
+        </FormSection>
+
+        {/* Step 1 — File Uploads */}
+        <FormSection>
           <PdfUpload
             file={pdfFile}
             onFileChange={handlePdfChange}
@@ -299,165 +361,31 @@ export function MetadataForm() {
             error={coverError}
             disabled={isBusy}
           />
-        </div>
-      </FormSection>
+        </FormSection>
 
-      {/* Step 2 — Extraction */}
-      <FormSection>
-        <StepHeader
-          step={2}
-          title="AI metadata extraction"
-          icon={Wand2}
-          active={bothFilesReady || Boolean(hasMetadata)}
-        />
-
-        {isExtracting && (
-          <div className="flex items-center gap-4 rounded-xl bg-primary/10 px-4 py-4 dark:bg-primary/15">
-            <span className="relative flex size-2.5 shrink-0">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/50 opacity-75" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-primary ring-2 ring-primary/30" />
-            </span>
-            <Sparkles className="size-5 shrink-0 text-primary animate-pulse" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">
-                Analyzing your book with AI…
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Extracting title, author, description, genre & tags
-              </p>
-            </div>
-            <Loader2 className="size-5 shrink-0 animate-spin text-primary" />
-          </div>
-        )}
-
-        {hasMetadata && !isExtracting && (
-          <div className="space-y-4 rounded-xl bg-muted/40 p-4 dark:bg-muted/20">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 className="size-3.5" />
-              Metadata extracted successfully
-            </div>
-
-            <div className="grid gap-3">
-              <div className="flex items-start gap-3">
-                <BookOpen className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Title
-                  </p>
-                  <p className="text-sm">{metadata.title}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <User className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Author
-                  </p>
-                  <p className="text-sm">{metadata.author}</p>
-                </div>
-              </div>
-
-              {metadata.description && (
-                <div className="rounded-lg bg-muted/50 p-3">
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Description
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed">
-                    {metadata.description}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center gap-4">
-                {metadata.genre && (
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Genre
-                    </p>
-                    <span className="mt-1 inline-block rounded-full bg-primary/10 px-3 py-0.5 text-xs font-medium text-primary">
-                      {metadata.genre}
-                    </span>
-                  </div>
-                )}
-
-                {metadata.tags.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Tags
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {metadata.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium"
-                        >
-                          <Tag className="size-3" />
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {extractionFailed && !isExtracting && (
-          <div className="flex flex-col items-center gap-3 rounded-xl bg-destructive/10 px-4 py-6 text-center dark:bg-destructive/15">
-            <p className="text-sm font-medium text-destructive">
-              Metadata extraction failed. Please try again.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              disabled={!bothFilesReady}
-              onClick={() => {
-                if (pdfFile && coverFile) {
-                  setExtractionFailed(false);
-                  setError(null);
-                  extractMetadata(pdfFile, coverFile);
-                }
-              }}
-            >
-              <Wand2 className="size-3.5" />
-              Retry extraction
-            </Button>
-          </div>
-        )}
-
-        {!bothFilesReady && !hasMetadata && !isExtracting && !extractionFailed && (
-          <div className="rounded-xl bg-muted/30 px-4 py-8 text-center dark:bg-muted/15">
-            <p className="text-sm font-medium text-muted-foreground">
-              Upload both files above to automatically extract metadata
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground/80">
-              PDF + JPG/PNG — extraction starts as soon as both are set
-            </p>
-          </div>
-        )}
-      </FormSection>
+        <FormSection className="col-span-3">
+          <MarkdownEditor
+            value={summaryPrompt}
+            onChange={(val) => setSummaryPrompt(val)}
+            placeholder="No description extracted — write one here…"
+            disabled={isBusy}
+            label="Summary Prompt"
+          />
+        </FormSection>
+      </div>
 
       {/* Step 3 — Upload */}
-      <FormSection>
-        <StepHeader
-          step={3}
-          title="Publish to library"
-          icon={Library}
-          active={Boolean(hasMetadata)}
-        />
+      <FormSection className="px-5 flex justify-between items-center space-y-2">
+        <span className="text-sm text-muted-foreground/80 self-end px-2">
+          Providing a good summary can help you get useful results from Bookify
+          faster!
+        </span>
         <Button
           onClick={onUploadBook}
           disabled={!hasMetadata || isBusy}
-          className="h-10 w-full gap-2 text-base disabled:opacity-60"
+          className="gap-2"
         >
-          {isUploading ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <Upload className="size-5" />
-          )}
+          {isUploading && <Loader2 className="size-5 animate-spin" />}
           {isUploading ? "Uploading…" : "Upload book"}
         </Button>
       </FormSection>
