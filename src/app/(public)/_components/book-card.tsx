@@ -28,7 +28,7 @@ export function BookCard({ book }: BookCardProps) {
       href={`/book/${book.id}`}
       className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-border/40 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:rounded-xl"
     >
-      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-amber-100/40 to-transparent dark:from-amber-900/20" />
+      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-primary/10 to-transparent dark:from-primary/15" />
 
       {/* Cover image */}
       <div className="relative m-2 aspect-[3/4] w-auto overflow-hidden rounded-md bg-muted/60 sm:m-3 sm:rounded-lg">
