@@ -13,7 +13,7 @@ Add a `MarkdownEditor` component — a fixed-height, scrollable text area with t
 
 ## Component
 
-**File:** `src/app/(protected)/upload/_components/markdown-editor.tsx`
+**File:** `src/components/markdown-editor.tsx`
 
 ### Props
 
@@ -23,9 +23,13 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
-  height?: string; // Tailwind class, default "h-48"
+  height?: string;    // CSS value applied via style={{ height }}, default "12rem" (≈ h-48)
+  maxLength?: number; // forwarded to the internal <textarea> in Code tab
+  id?: string;        // forwarded to the internal <textarea> for label association
 }
 ```
+
+The `height` prop is a CSS value string (e.g. `"12rem"`, `"200px"`) applied as `style={{ height }}` on the outer wrapper — not a Tailwind class — to avoid Tailwind v4 content-scanning issues with runtime class names. Both the `<textarea>` and preview panel fill this wrapper via `h-full`.
 
 ### Structure
 
@@ -46,7 +50,7 @@ interface MarkdownEditorProps {
 - Default active tab: `code`
 - **Code tab:** A native `<textarea>` with `resize-none`, `overflow-y-auto`, full width/height inside the panel. Styled consistent with `src/components/ui/textarea.tsx`.
 - **Preview tab:** Renders the markdown via `react-markdown`. If value is empty, shows a muted placeholder. Scrollable (`overflow-y-auto`). Styled with `@tailwindcss/typography` prose classes (`prose prose-sm dark:prose-invert`).
-- The outer wrapper has a fixed height (default `h-48`) and `overflow-hidden`; both panels fill it and scroll independently.
+- The outer wrapper has a fixed height applied via `style={{ height: height ?? "12rem" }}` and `overflow-hidden`; both panels fill it via `h-full` and scroll independently.
 - Tabs are in `text-xs`, positioned absolutely (or flexed) to the **top-right** of the component header.
 - Uses the existing `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` from `src/components/ui/tabs.tsx`.
 
@@ -59,25 +63,24 @@ interface MarkdownEditorProps {
 | `react-markdown` | Safe markdown → React rendering | Install (`npm i react-markdown`) |
 | `@tailwindcss/typography` | `prose` classes for preview styling | Install (`npm i -D @tailwindcss/typography`) |
 
-`@tailwindcss/typography` must be added to `tailwind.config` (or CSS `@plugin` if using Tailwind v4 CSS-first config).
+Since this project uses Tailwind v4 CSS-first (no `tailwind.config.js`), add `@plugin "@tailwindcss/typography";` to `src/app/globals.css` immediately after the existing `@import` block. Do **not** use a `plugins` array in a config file.
 
 ---
 
 ## Integration Points
 
-1. **`metadata-form.tsx`** — Replace the plain text display of `metadata.description` in the extracted metadata card with a read-only `MarkdownEditor` (disabled, preview-only mode, or just the preview tab shown). Alternatively, add as an editable field below the extracted card so users can tweak the description before uploading.
+1. **`metadata-form.tsx`** — Remove the static `{metadata.description && ...}` block (lines 280-289) inside the `hasMetadata` card and replace it with a `<MarkdownEditor>` bound to `metadata.description`. The `onChange` handler updates state via `setMetadata(m => ({ ...m, description: value }))`. This gives users the ability to edit the AI-extracted description before submitting. The rest of the extracted-metadata card (title, author, genre, tags) is unchanged.
 
-   > Decision: Show the extracted description as editable markdown in the form so users can adjust it before submitting. The component's `onChange` updates `metadata.description`.
-
-2. **`edit-metadata-dialog.tsx`** — Replace the `<Textarea>` for the description field with `<MarkdownEditor>`.
+2. **`edit-metadata-dialog.tsx`** — Replace the `<Textarea id="edit-description">` (lines 131-138) with `<MarkdownEditor id="edit-description" maxLength={3000} ...>`. The existing `<Label htmlFor="edit-description">` continues to work because `id` is forwarded to the internal `<textarea>`. Preserve the `maxLength={3000}` cap that the original textarea had.
 
 ---
 
 ## Styling
 
+- `<Tabs>` root: pass `className="gap-0 h-full"` to suppress the default `gap-2` the primitive applies unconditionally — without this the `h-full` content panel overflows the fixed-height outer wrapper by 8px.
 - Component border: `border border-input rounded-md`
 - Header bar: `flex items-center justify-between px-3 py-1.5 border-b border-input bg-muted/30`
-- Tabs in header use existing `Tabs` primitives with `variant="line"` or custom tight styling at `text-xs`
+- Tabs in header use existing `Tabs` primitives with `variant="line"` on `TabsList`. Apply `className="text-xs"` explicitly to each `TabsTrigger` — the `variant="line"` prop controls visual style only (underline indicator), not font size.
 - Both panels: `h-full overflow-y-auto p-3`
 - Preview prose: `prose prose-sm dark:prose-invert max-w-none text-sm`
 
