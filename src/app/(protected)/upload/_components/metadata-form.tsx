@@ -3,20 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  BookOpen,
-  CheckCircle2,
-  Loader2,
-  Tag,
-  User,
-  Wand2,
-} from "lucide-react";
+import { BookOpen, CheckCircle2, Loader2, Tag, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CoverUpload } from "@/app/(protected)/upload/_components/cover-upload";
 import { PdfUpload } from "@/app/(protected)/upload/_components/pdf-upload";
 import { MarkdownEditor } from "@/components/markdown-editor";
+import { SUMMARY_PROMPT } from "@/modules/summary/constant";
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 const ALLOWED_COVER_TYPES = new Set(["image/jpeg", "image/jpg", "image/png"]);
@@ -72,6 +66,7 @@ export function MetadataForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [extracted, setExtracted] = useState(false);
   const [extractionFailed, setExtractionFailed] = useState(false);
+  const [summaryPrompt, setSummaryPrompt] = useState(SUMMARY_PROMPT);
   const extractedRef = useRef(false);
 
   const pdfError = useMemo(() => validatePdfFile(pdfFile), [pdfFile]);
@@ -278,15 +273,6 @@ export function MetadataForm() {
                   </div>
                 </div>
 
-                <MarkdownEditor
-                  value={metadata.description}
-                  onChange={(val) =>
-                    setMetadata((m) => ({ ...m, description: val }))
-                  }
-                  placeholder="No description extracted — write one here…"
-                  disabled={isBusy}
-                />
-
                 <div className="flex flex-wrap items-center gap-4">
                   {metadata.genre && (
                     <div className="flex flex-wrap items-center gap-2">
@@ -350,7 +336,7 @@ export function MetadataForm() {
             !hasMetadata &&
             !isExtracting &&
             !extractionFailed && (
-              <div className="rounded-xl h-full bg-muted/30  px-8 py-8 text-center dark:bg-muted/15 flex justify-center items-center flex-col border shadow-md">
+              <div className="rounded-xl h-full bg-muted/30  px-8 py-8 text-center dark:bg-muted/15 flex justify-center items-center flex-col border shadow">
                 <p className="text-lg font-medium text-muted-foreground">
                   Upload both files above to automatically extract metadata
                 </p>
@@ -376,14 +362,28 @@ export function MetadataForm() {
             disabled={isBusy}
           />
         </FormSection>
+
+        <FormSection className="col-span-3">
+          <MarkdownEditor
+            value={summaryPrompt}
+            onChange={(val) => setSummaryPrompt(val)}
+            placeholder="No description extracted — write one here…"
+            disabled={isBusy}
+            label="Summary Prompt"
+          />
+        </FormSection>
       </div>
 
       {/* Step 3 — Upload */}
-      <FormSection className="px-5 flex justify-end">
+      <FormSection className="px-5 flex justify-between items-center space-y-2">
+        <span className="text-sm text-muted-foreground/80 self-end px-2">
+          Providing a good summary can help you get useful results from Bookify
+          faster!
+        </span>
         <Button
           onClick={onUploadBook}
           disabled={!hasMetadata || isBusy}
-          className="gap-2 "
+          className="gap-2"
         >
           {isUploading && <Loader2 className="size-5 animate-spin" />}
           {isUploading ? "Uploading…" : "Upload book"}

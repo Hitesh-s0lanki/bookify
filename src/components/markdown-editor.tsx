@@ -34,10 +34,12 @@ export function MarkdownEditor({
       className="overflow-hidden rounded-md border border-input relative "
       style={{ height }}
     >
-      <Tabs defaultValue="code" className="gap-0 h-full px-2 py-2">
+      <Tabs defaultValue="code" className="gap-0 h-full px-2 py-5">
         {/* Header bar */}
         <div className="flex items-center justify-end absolute right-4 top-4 gap-2">
-          {label && <span className="text-xs text-muted-foreground">{label}</span>}
+          {label && (
+            <span className="text-xs text-muted-foreground">{label}</span>
+          )}
           <TabsList className="rounded-full max-h-8">
             <TabsTrigger
               value="code"
@@ -81,26 +83,44 @@ export function MarkdownEditor({
           className="h-full mt-0 min-h-0 overflow-y-auto"
         >
           {value.trim() ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none px-3 py-2 text-sm">
+            <div className="prose prose-sm dark:prose-invert max-w-3xl px-5 py-3">
               <ReactMarkdown
                 components={{
                   h1: ({ node: _node, ...props }) => (
-                    <h1 className="text-2xl font-bold mt-4 mb-2 leading-tight" {...props} />
+                    <h1
+                      className="text-2xl font-bold mt-4 mb-2 leading-tight"
+                      {...props}
+                    />
                   ),
                   h2: ({ node: _node, ...props }) => (
-                    <h2 className="text-xl font-semibold mt-3 mb-1.5 leading-snug" {...props} />
+                    <h2
+                      className="text-xl font-semibold mt-3 mb-1.5 leading-snug"
+                      {...props}
+                    />
                   ),
                   h3: ({ node: _node, ...props }) => (
-                    <h3 className="text-lg font-semibold mt-3 mb-1" {...props} />
+                    <h3
+                      className="text-lg font-semibold mt-3 mb-1"
+                      {...props}
+                    />
                   ),
                   h4: ({ node: _node, ...props }) => (
-                    <h4 className="text-base font-semibold mt-2 mb-1" {...props} />
+                    <h4
+                      className="text-base font-semibold mt-2 mb-1"
+                      {...props}
+                    />
                   ),
                   h5: ({ node: _node, ...props }) => (
-                    <h5 className="text-sm font-semibold mt-2 mb-0.5" {...props} />
+                    <h5
+                      className="text-sm font-semibold mt-2 mb-0.5"
+                      {...props}
+                    />
                   ),
                   h6: ({ node: _node, ...props }) => (
-                    <h6 className="text-sm font-medium mt-2 mb-0.5 text-muted-foreground" {...props} />
+                    <h6
+                      className="text-sm font-medium mt-2 mb-0.5 text-muted-foreground"
+                      {...props}
+                    />
                   ),
                 }}
               >

@@ -17,10 +17,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,7 +48,10 @@ interface BookViewerProps {
   onBookUpdate?: (book: Book) => void;
 }
 
-export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps) {
+export function BookViewer({
+  book: initialBook,
+  onBookUpdate,
+}: BookViewerProps) {
   const router = useRouter();
   const [book, setBook] = useState(initialBook);
   const [coverSrc, setCoverSrc] = useState(book.coverUrl || FALLBACK_COVER);
@@ -67,7 +67,8 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
     book.status === "pending" ||
     book.status === "PROCESSING" ||
     book.status === "UPLOADED";
-  const canShowPdf = isReady && book.pdfUrl && !book.pdfUrl.startsWith("pending");
+  const canShowPdf =
+    isReady && book.pdfUrl && !book.pdfUrl.startsWith("pending");
 
   const fetchBook = useCallback(async () => {
     try {
@@ -102,10 +103,16 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
         const data = await res.json();
         throw new Error(data.error || "Failed to reprocess");
       }
-      setBook((prev) => ({ ...prev, status: "PROCESSING", failureReason: undefined }));
+      setBook((prev) => ({
+        ...prev,
+        status: "PROCESSING",
+        failureReason: undefined,
+      }));
       toast.success("Reprocessing started");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to reprocess");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to reprocess",
+      );
     } finally {
       setIsReprocessing(false);
     }
@@ -122,7 +129,9 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
       toast.success("Book deleted successfully");
       router.push("/");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete book");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete book",
+      );
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -140,12 +149,12 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
           {/* Cover + Title + Actions row */}
           <div className="flex gap-4 p-4 sm:gap-6 sm:p-6">
             {/* Cover */}
-            <div className="relative aspect-[3/4] w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-40">
+            <div className="relative w-58 shrink-0 overflow-hidden rounded-sm bg-muted">
               <Image
                 src={coverSrc}
                 alt={`${book.title} cover`}
                 fill
-                className="object-cover"
+                className="object-center border"
                 sizes="(max-width: 640px) 96px, 160px"
                 unoptimized
                 onError={() => setCoverSrc(FALLBACK_COVER)}
@@ -159,13 +168,17 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
                   <h1 className="text-lg font-bold tracking-tight sm:text-2xl">
                     {book.title}
                   </h1>
-                  <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">
+                  <p className="mt-0.5 text-sm text-muted-foreground">
                     {book.author}
                   </p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0"
+                    >
                       <MoreVertical className="size-4" />
                       <span className="sr-only">Book actions</span>
                     </Button>
@@ -177,14 +190,21 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
                     </DropdownMenuItem>
                     {canShowPdf && (
                       <DropdownMenuItem asChild>
-                        <Link href={book.pdfUrl} target="_blank" rel="noopener noreferrer">
+                        <Link
+                          href={book.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <ExternalLink className="mr-2 size-4" />
                           Open PDF
                         </Link>
                       </DropdownMenuItem>
                     )}
                     {isFailed && (
-                      <DropdownMenuItem onSelect={handleReprocess} disabled={isReprocessing}>
+                      <DropdownMenuItem
+                        onSelect={handleReprocess}
+                        disabled={isReprocessing}
+                      >
                         <RefreshCw className="mr-2 size-4" />
                         Reprocess
                       </DropdownMenuItem>
@@ -201,19 +221,24 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
                 </DropdownMenu>
               </div>
 
+              <BookMetadata book={book} />
+
               {/* Status / CTA — visible only on desktop next to title */}
-              <div className="mt-3 hidden sm:block">
+              <div className="hidden sm:block">
                 {isProcessing && (
                   <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
                     <Loader2 className="size-4 animate-spin text-amber-600 dark:text-amber-400" />
-                    <p className="text-sm text-amber-700 dark:text-amber-300">Processing your book…</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      Processing your book…
+                    </p>
                   </div>
                 )}
                 {isFailed && (
                   <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
                     <AlertTriangle className="size-4 shrink-0 text-destructive" />
                     <p className="text-sm text-destructive">
-                      Processing failed{book.failureReason ? ` — ${book.failureReason}` : ""}
+                      Processing failed
+                      {book.failureReason ? ` — ${book.failureReason}` : ""}
                     </p>
                   </div>
                 )}
@@ -229,18 +254,15 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
             </div>
           </div>
 
-          {/* Metadata */}
-          <div className="px-4 pt-2 pb-4 sm:px-6 sm:pb-6">
-            <BookMetadata book={book} />
-          </div>
-
           {/* Status / CTA — mobile only */}
           {(isProcessing || isFailed || isReady) && (
             <div className="px-4 pb-4 sm:hidden">
               {isProcessing && (
                 <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
                   <Loader2 className="size-4 animate-spin text-amber-600 dark:text-amber-400" />
-                  <p className="text-sm text-amber-700 dark:text-amber-300">Processing…</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    Processing…
+                  </p>
                 </div>
               )}
               {isFailed && (
@@ -274,7 +296,9 @@ export function BookViewer({ book: initialBook, onBookUpdate }: BookViewerProps)
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete &ldquo;{book.title}&rdquo;?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete &ldquo;{book.title}&rdquo;?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete this book and all its data including
               AI-generated chunks and embeddings. This action cannot be undone.
