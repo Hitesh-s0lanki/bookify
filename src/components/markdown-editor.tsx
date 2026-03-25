@@ -27,6 +27,7 @@ export function MarkdownEditor({
   height = "32rem",
   maxLength,
   id,
+  label = "Description",
 }: MarkdownEditorProps) {
   return (
     <div
@@ -35,7 +36,8 @@ export function MarkdownEditor({
     >
       <Tabs defaultValue="code" className="gap-0 h-full px-2 py-2">
         {/* Header bar */}
-        <div className="flex items-center justify-end absolute right-4 top-4">
+        <div className="flex items-center justify-end absolute right-4 top-4 gap-2">
+          {label && <span className="text-xs text-muted-foreground">{label}</span>}
           <TabsList className="rounded-full max-h-8">
             <TabsTrigger
               value="code"
