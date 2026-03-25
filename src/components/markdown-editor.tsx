@@ -82,7 +82,30 @@ export function MarkdownEditor({
         >
           {value.trim() ? (
             <div className="prose prose-sm dark:prose-invert max-w-none px-3 py-2 text-sm">
-              <ReactMarkdown>{value}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  h1: ({ node: _node, ...props }) => (
+                    <h1 className="text-2xl font-bold mt-4 mb-2 leading-tight" {...props} />
+                  ),
+                  h2: ({ node: _node, ...props }) => (
+                    <h2 className="text-xl font-semibold mt-3 mb-1.5 leading-snug" {...props} />
+                  ),
+                  h3: ({ node: _node, ...props }) => (
+                    <h3 className="text-lg font-semibold mt-3 mb-1" {...props} />
+                  ),
+                  h4: ({ node: _node, ...props }) => (
+                    <h4 className="text-base font-semibold mt-2 mb-1" {...props} />
+                  ),
+                  h5: ({ node: _node, ...props }) => (
+                    <h5 className="text-sm font-semibold mt-2 mb-0.5" {...props} />
+                  ),
+                  h6: ({ node: _node, ...props }) => (
+                    <h6 className="text-sm font-medium mt-2 mb-0.5 text-muted-foreground" {...props} />
+                  ),
+                }}
+              >
+                {value}
+              </ReactMarkdown>
             </div>
           ) : (
             <p className="px-3 py-2 text-sm text-muted-foreground">
