@@ -53,6 +53,14 @@ const bookSchema = new Schema(
       type: String,
       default: "",
     },
+    summary: {
+      type: String,
+      default: null,
+    },
+    summaryPrompt: {
+      type: String,
+      default: null,
+    },
     failureReason: {
       type: String,
       default: "",

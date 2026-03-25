@@ -12,7 +12,12 @@ type PdfUploadProps = {
   disabled?: boolean;
 };
 
-export function PdfUpload({ file, onFileChange, error, disabled }: PdfUploadProps) {
+export function PdfUpload({
+  file,
+  onFileChange,
+  error,
+  disabled,
+}: PdfUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -43,7 +48,6 @@ export function PdfUpload({ file, onFileChange, error, disabled }: PdfUploadProp
   if (file) {
     return (
       <div className="space-y-1.5">
-        <p className="text-sm font-medium">Book PDF</p>
         <div className="group relative overflow-hidden rounded-xl border-2 border-primary/20 bg-primary/5 p-5 transition-colors hover:border-primary/30">
           <div className="flex items-center gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -51,7 +55,9 @@ export function PdfUpload({ file, onFileChange, error, disabled }: PdfUploadProp
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatSize(file.size)}
+              </p>
             </div>
             {!disabled && (
               <Button
@@ -76,13 +82,13 @@ export function PdfUpload({ file, onFileChange, error, disabled }: PdfUploadProp
 
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-medium">Book PDF</p>
       <div
         role="button"
         tabIndex={0}
         onClick={() => !disabled && inputRef.current?.click()}
         onKeyDown={(e) => {
-          if ((e.key === "Enter" || e.key === " ") && !disabled) inputRef.current?.click();
+          if ((e.key === "Enter" || e.key === " ") && !disabled)
+            inputRef.current?.click();
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -110,7 +116,9 @@ export function PdfUpload({ file, onFileChange, error, disabled }: PdfUploadProp
         <div className="space-y-1">
           <p className="text-sm font-medium">
             Drop your PDF here or{" "}
-            <span className="text-primary underline-offset-4 group-hover:underline">browse</span>
+            <span className="text-primary underline-offset-4 group-hover:underline">
+              browse
+            </span>
           </p>
           <p className="text-xs text-muted-foreground">PDF up to 50MB</p>
         </div>

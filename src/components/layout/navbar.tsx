@@ -74,7 +74,7 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
       {/* Top gradient accent line */}
-      <div className="h-0.5 w-full bg-linear-to-r from-amber-500 via-orange-500 to-rose-500" />
+      <div className="h-0.5 w-full bg-primary" />
 
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 sm:h-16 sm:gap-4 sm:px-6">
         {/* Logo */}
@@ -82,10 +82,14 @@ export function Navbar() {
           href="/"
           className="group inline-flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight transition-colors hover:text-primary"
         >
-          <Image src="/logo.png" alt="Bookify" width={28} height={28} className="sm:size-8" />
-          <span className="bg-linear-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent dark:from-amber-400 dark:to-orange-400">
-            Bookify
-          </span>
+          <Image
+            src="/logo.png"
+            alt="Bookify"
+            width={28}
+            height={28}
+            className="sm:size-8"
+          />
+          <span className="text-primary">Bookify</span>
         </Link>
 
         {/* Desktop nav */}
@@ -143,7 +147,10 @@ export function Navbar() {
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="flex w-[280px] flex-col gap-0 p-0">
+            <SheetContent
+              side="right"
+              className="flex w-[280px] flex-col gap-0 p-0"
+            >
               <SheetHeader className="border-b p-4">
                 <SheetTitle className="flex items-center gap-2">
                   <Sparkles className="size-4 text-amber-500" />
@@ -163,7 +170,9 @@ export function Navbar() {
                       className="size-10"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{userName}</p>
+                      <p className="truncate text-sm font-semibold">
+                        {userName}
+                      </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {userEmail}
                       </p>
@@ -188,7 +197,7 @@ export function Navbar() {
                           "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                           isActive
                             ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}
                       >
                         <Icon className="size-4" />

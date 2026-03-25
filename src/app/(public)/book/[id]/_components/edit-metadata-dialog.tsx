@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import type { Book } from "@/types/book";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface EditMetadataDialogProps {
   book: Book;
@@ -128,13 +128,14 @@ export function EditMetadataDialog({
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="edit-description">Description</Label>
-            <Textarea
+            <MarkdownEditor
               id="edit-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder="Brief description of the book"
-              rows={4}
+              disabled={saving}
               maxLength={3000}
+              label=""
             />
           </div>
         </div>
