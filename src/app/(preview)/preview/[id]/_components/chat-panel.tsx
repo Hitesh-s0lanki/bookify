@@ -89,8 +89,7 @@ export function ChatPanel({ book, numPages, onPageChange }: ChatPanelProps) {
     // Handle go_to_page tool parts
     for (const part of lastMsg.parts ?? []) {
       if (
-        part.type.startsWith("tool-") &&
-        (part as { toolName?: string }).toolName === "go_to_page" &&
+        part.type === "tool-go_to_page" &&
         (part as { state?: string }).state === "input-available"
       ) {
         const raw =
