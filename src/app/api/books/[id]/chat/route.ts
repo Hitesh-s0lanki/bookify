@@ -5,12 +5,24 @@ import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 import { connectToDatabase } from "@/lib/db";
-import { BookModel } from "@/modules/books/model";
+import { BookModel, type BookDocument } from "@/modules/books/model";
 import { ChatSessionModel } from "@/modules/chat/model";
 import { generateQueryEmbedding } from "@/lib/api/embeddings";
 import { searchBookChunks } from "@/lib/vector-search";
 
 export const maxDuration = 30;
+
+const chatRequestSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      })
+    )
+    .min(1),
+  sessionId: z.string().optional(),
+});
 
 const goToPageTool = tool({
   description: "Navigate the PDF viewer to a specific page number.",
@@ -32,21 +44,22 @@ export async function POST(
   }
 
   const { id: bookId } = await params;
-  const body = await request.json();
-  const { messages, sessionId: incomingSessionId } = body as {
-    messages: { role: string; content: string }[];
-    sessionId?: string;
-  };
+
+  const bodyParsed = chatRequestSchema.safeParse(await request.json());
+  if (!bodyParsed.success) {
+    return new Response(JSON.stringify({ error: "invalid_request" }), { status: 400 });
+  }
+  const { messages, sessionId: incomingSessionId } = bodyParsed.data;
 
   await connectToDatabase();
 
   // Load book and check readiness
-  const book = await BookModel.findById(bookId).lean();
+  // Books are shared resources — no per-user ownership check needed
+  const book = await BookModel.findById(bookId).lean<BookDocument & { _id: unknown }>();
   if (!book) {
     return new Response(JSON.stringify({ error: "not_found" }), { status: 404 });
   }
-  const status = (book as { status: string }).status;
-  if (status !== "ready" && status !== "READY") {
+  if (book.status !== "ready" && book.status !== "READY") {
     return new Response(JSON.stringify({ error: "book_not_ready" }), { status: 400 });
   }
 
@@ -69,6 +82,10 @@ export async function POST(
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const userText = lastUserMessage?.content ?? "";
 
+  if (!userText.trim()) {
+    return new Response(JSON.stringify({ error: "empty_message" }), { status: 400 });
+  }
+
   const queryEmbedding = await generateQueryEmbedding(userText);
   const chunks = await searchBookChunks({ bookId, queryEmbedding, limit: 8 });
 
@@ -76,10 +93,7 @@ export async function POST(
     .map((c) => `Page ${c.page}: ${c.chunkText}`)
     .join("\n\n");
 
-  const bookTitle = (book as { title: string }).title;
-  const bookAuthor = (book as { author: string }).author;
-
-  const systemPrompt = `You are an AI assistant helping the user understand the book "${bookTitle}" by ${bookAuthor}.
+  const systemPrompt = `You are an AI assistant helping the user understand the book "${book.title}" by ${book.author}.
 Use the following excerpts to answer the user's question.
 When referencing a specific passage, call the go_to_page tool to navigate there.
 
@@ -98,7 +112,7 @@ ${excerpts}`;
       const result = streamText({
         model: openai("gpt-4o"),
         system: systemPrompt,
-        messages: messages as import("ai").ModelMessage[],
+        messages,
         tools: { go_to_page: goToPageTool },
         stopWhen: stepCountIs(1),
         onFinish: async ({ text, toolCalls }) => {
