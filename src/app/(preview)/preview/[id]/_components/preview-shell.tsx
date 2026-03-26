@@ -69,7 +69,7 @@ export function PreviewShell({ book }: PreviewShellProps) {
               </SheetHeader>
               <div className="mx-auto my-2 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
               <div className="flex-1 overflow-hidden">
-                <SidePanel book={book} currentPage={currentPage} />
+                <SidePanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={setCurrentPage} />
               </div>
             </SheetContent>
           </Sheet>
@@ -90,7 +90,7 @@ export function PreviewShell({ book }: PreviewShellProps) {
 
         {/* Side panel — desktop only */}
         <div className="hidden overflow-hidden md:block">
-          <SidePanel book={book} currentPage={currentPage} />
+          <SidePanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={setCurrentPage} />
         </div>
       </div>
     </div>

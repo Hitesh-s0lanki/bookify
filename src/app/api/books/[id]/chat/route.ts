@@ -12,15 +12,25 @@ import { searchBookChunks } from "@/lib/vector-search";
 
 export const maxDuration = 30;
 
+// Accept both legacy { role, content } and v6 UIMessage { role, parts } formats
+const uiMessagePartSchema = z.object({ type: z.string() }).passthrough();
+
+const chatMessageSchema = z.union([
+  // v6 UIMessage format (sent by DefaultChatTransport)
+  z.object({
+    id: z.string().optional(),
+    role: z.enum(["user", "assistant"]),
+    parts: z.array(uiMessagePartSchema),
+  }),
+  // Legacy { role, content } format
+  z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string(),
+  }),
+]);
+
 const chatRequestSchema = z.object({
-  messages: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string(),
-      })
-    )
-    .min(1),
+  messages: z.array(chatMessageSchema).min(1),
   sessionId: z.string().optional(),
 });
 
@@ -78,8 +88,26 @@ export async function POST(
     sessionId = session._id.toString();
   }
 
+  // Extract text from a message (handles both legacy content and v6 parts formats)
+  function extractText(msg: (typeof messages)[number]): string {
+    if ("content" in msg && typeof msg.content === "string") return msg.content;
+    if ("parts" in msg && Array.isArray(msg.parts)) {
+      return msg.parts
+        .filter((p): p is { type: "text"; text: string } => p.type === "text" && "text" in p)
+        .map((p) => p.text)
+        .join("");
+    }
+    return "";
+  }
+
+  // Build simplified { role, content } messages for the LLM
+  const simplifiedMessages = messages.map((m) => ({
+    role: m.role,
+    content: extractText(m),
+  }));
+
   // RAG: embed latest user message and retrieve relevant chunks
-  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+  const lastUserMessage = [...simplifiedMessages].reverse().find((m) => m.role === "user");
   const userText = lastUserMessage?.content ?? "";
 
   if (!userText.trim()) {
@@ -112,7 +140,7 @@ ${excerpts}`;
       const result = streamText({
         model: openai("gpt-4o"),
         system: systemPrompt,
-        messages,
+        messages: simplifiedMessages,
         tools: { go_to_page: goToPageTool },
         stopWhen: stepCountIs(1),
         onFinish: async ({ text, toolCalls }) => {

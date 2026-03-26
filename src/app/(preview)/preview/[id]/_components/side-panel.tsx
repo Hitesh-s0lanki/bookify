@@ -11,9 +11,11 @@ import { VoicePanel } from "./voice-panel";
 interface SidePanelProps {
   book: Book;
   currentPage: number;
+  numPages: number | null;
+  onPageChange: (page: number) => void;
 }
 
-export function SidePanel({ book, currentPage }: SidePanelProps) {
+export function SidePanel({ book, currentPage, numPages, onPageChange }: SidePanelProps) {
   return (
     <Tabs defaultValue="chat" className="flex h-full flex-col bg-card">
       <div className="flex flex-col gap-3 py-3">
@@ -45,7 +47,7 @@ export function SidePanel({ book, currentPage }: SidePanelProps) {
       </div>
 
       <TabsContent value="chat" className="overflow-hidden">
-        <ChatPanel book={book} currentPage={currentPage} />
+        <ChatPanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={onPageChange} />
       </TabsContent>
       <TabsContent value="voice" className="overflow-hidden">
         <VoicePanel book={book} />
