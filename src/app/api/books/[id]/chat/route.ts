@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 
 import { connectToDatabase } from "@/lib/db";
 import { BookModel, type BookDocument } from "@/modules/books/model";
-import { ChatSessionModel } from "@/modules/chat/model";
+import { ChatSessionModel, type StoredMessage, type ChatSessionDocument } from "@/modules/chat/model";
 import { generateQueryEmbedding } from "@/lib/api/embeddings";
 import { searchBookChunks } from "@/lib/vector-search";
 
@@ -168,4 +168,48 @@ ${excerpts}`;
   });
 
   return createUIMessageStreamResponse({ stream });
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
+  const { id: _bookId } = await params;
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("sessionId");
+
+  if (!sessionId) {
+    return new Response(JSON.stringify({ error: "sessionId required" }), { status: 400 });
+  }
+
+  await connectToDatabase();
+
+  const session = await ChatSessionModel.findById(sessionId).lean<ChatSessionDocument & { _id: unknown; userId: string; messages: StoredMessage[] }>();
+  if (!session) {
+    return new Response(JSON.stringify({ error: "not_found" }), { status: 404 });
+  }
+  if (session.userId !== userId) {
+    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
+  }
+
+  const storedMessages = session.messages ?? [];
+
+  // Convert stored messages to AI SDK v6 UIMessage format
+  const uiMessages = storedMessages.map((m) => ({
+    id: m.id ?? crypto.randomUUID(),
+    role: m.role as "user" | "assistant",
+    content: m.content,
+    parts: [
+      ...(m.reasoning ? [{ type: "reasoning" as const, text: m.reasoning, state: "done" as const }] : []),
+      { type: "text" as const, text: m.content },
+    ],
+    metadata: {},
+  }));
+
+  return Response.json({ sessionId: sessionId.toString(), messages: uiMessages });
 }
