@@ -144,7 +144,12 @@ ${excerpts}`;
         },
       });
 
+      // Merge the LLM stream — reasoning chunks will be written in onFinish
       writer.merge(result.toUIMessageStream());
+
+      // Wait for the full stream (including onFinish) to complete
+      // before this execute Promise resolves (which would close the writer)
+      await result.consumeStream();
     },
   });
 
