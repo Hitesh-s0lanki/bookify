@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { openai } from "@ai-sdk/openai";
-import { streamText, createUIMessageStream, createUIMessageStreamResponse, tool, zodSchema } from "ai";
+import { streamText, createUIMessageStream, createUIMessageStreamResponse, tool, zodSchema, stepCountIs } from "ai";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
 
@@ -100,12 +100,21 @@ ${excerpts}`;
         system: systemPrompt,
         messages: messages as import("ai").ModelMessage[],
         tools: { go_to_page: goToPageTool },
+        stopWhen: stepCountIs(1),
         onFinish: async ({ text, toolCalls }) => {
           try {
             // Extract and strip reasoning
             const reasoningMatch = text.match(/<think>([\s\S]*?)<\/think>/);
             const reasoning = reasoningMatch ? reasoningMatch[1].trim() : null;
             const cleanText = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+            // Write reasoning annotation back to the stream so the client receives it
+            if (reasoning) {
+              const reasoningId = crypto.randomUUID();
+              writer.write({ type: "reasoning-start", id: reasoningId });
+              writer.write({ type: "reasoning-delta", id: reasoningId, delta: reasoning });
+              writer.write({ type: "reasoning-end", id: reasoningId });
+            }
 
             // Persist to MongoDB
             const userMsg = {
