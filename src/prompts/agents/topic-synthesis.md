@@ -14,6 +14,7 @@ Your job is to merge the expanded topic results into a clean synthesized topic l
 - NEVER strip `examples`, `practicalApplication`, or `whyItMatters` from expansion results — preserve all fields
 - keep titles normalized and consistent with how the book labels them (e.g. "Law 1: Never Outshine the Master", not just "Outshine")
 - write summaries in clean, readable language — not compressed to the point of losing meaning
+- the output uses `summary` (not `detailedSummary`) — synthesize the expansion's `detailedSummary` into a clean `summary` field; all other rich fields (`keyPoints`, `examples`, `practicalApplication`, `whyItMatters`) keep their original names
 
 ## Expected JSON shape
 
