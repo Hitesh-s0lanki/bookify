@@ -1,8 +1,15 @@
-import { model, models, Schema, type InferSchemaType } from "mongoose";
+import mongoose, { type InferSchemaType } from "mongoose";
 import { VOICE_PERSONAS } from "./constants";
+
+const { model, models, Schema } = mongoose;
 
 const bookSchema = new Schema(
   {
+    userId: {
+      type: String,
+      default: null,
+      index: true,
+    },
     title: {
       type: String,
       required: true,

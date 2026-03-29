@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { Types } from "mongoose";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -33,6 +34,11 @@ function normalizeTags(rawTags: FormDataEntryValue | null) {
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const contentType = request.headers.get("content-type") ?? "";
 
     let parsedData: z.infer<typeof createBookSchema>;
@@ -50,6 +56,7 @@ export async function POST(request: Request) {
         description: formData.get("description"),
         genre: formData.get("genre"),
         tags: normalizeTags(formData.get("tags")),
+        summaryPrompt: formData.get("summaryPrompt"),
         pdfUrl: formData.get("pdfUrl") ?? undefined,
         coverUrl: formData.get("coverUrl") ?? undefined,
       });
@@ -110,9 +117,11 @@ export async function POST(request: Request) {
       _id: bookId,
       title: parsedData.title,
       author: parsedData.author,
+      userId,
       description: parsedData.description,
       genre: parsedData.genre,
       tags: parsedData.tags,
+      summaryPrompt: parsedData.summaryPrompt,
       pdfUrl: finalPdfUrl,
       coverUrl: finalCoverUrl,
       pdfBuffer,

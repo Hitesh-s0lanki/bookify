@@ -15,4 +15,5 @@ export interface Book {
   genre?: string;
   tags?: string[];
   failureReason?: string;
+  summary?: string | null;
 }

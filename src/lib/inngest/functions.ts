@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 import { generateGetPresignedUrl } from "@/lib/api/s3";
 import { extractRawTextFromPdfBuffer } from "@/lib/pdf";
 import { BookModel } from "@/modules/books/model";
+import { generateBookSummaryForProcessedBook } from "@/modules/agents/actions/generate-book-summary";
 
 export const processBook = inngest.createFunction(
   {
@@ -83,12 +84,24 @@ export const processBook = inngest.createFunction(
       await insertChunksWithEmbeddings({ chunks, embeddings });
     });
 
-    await step.run("update-status", async () => {
+    await step.run("store-context", async () => {
       await connectToDatabase();
       const contextText = text.slice(0, 20_000);
       await BookModel.updateOne(
         { _id: bookId },
-        { status: "READY", contextText }
+        { contextText }
+      );
+    });
+
+    await step.run("generate-summary", async () => {
+      await generateBookSummaryForProcessedBook({ bookId });
+    });
+
+    await step.run("set-ready", async () => {
+      await connectToDatabase();
+      await BookModel.updateOne(
+        { _id: bookId },
+        { status: "READY" }
       );
     });
 

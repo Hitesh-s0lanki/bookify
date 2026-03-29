@@ -17,6 +17,7 @@ function toBook(doc: {
   description?: string;
   genre?: string;
   tags?: string[];
+  summary?: string | null;
 }): Book {
   const normalizedStatus =
     doc.status === "ready" || doc.status === "READY"
@@ -41,6 +42,7 @@ function toBook(doc: {
     description: doc.description,
     genre: doc.genre,
     tags: doc.tags,
+    summary: doc.summary ?? null,
   };
 }
 

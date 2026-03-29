@@ -22,20 +22,6 @@ interface VoicePanelProps {
   onPageChange: (page: number) => void;
 }
 
-const GO_TO_PAGE_TOOL = {
-  type: "function" as const,
-  function: {
-    name: "go_to_page",
-    description: "Navigate the PDF viewer to a specific page number",
-    parameters: {
-      type: "object" as const,
-      properties: {
-        page: { type: "number" as const, description: "1-based page number to navigate to" },
-      },
-      required: ["page"],
-    },
-  },
-};
 
 export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
   const vapiRef = useRef<Vapi | null>(null);
@@ -124,11 +110,19 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
       }
     });
 
-    vapi.on("error", (error: Error) => {
-      console.error("Vapi error", error);
-      const msg = (error?.message ?? "").toLowerCase();
-      if (msg.includes("permission") || msg.includes("microphone")) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vapi.on("error", (error: any) => {
+      console.error("Vapi error", JSON.stringify(error), error);
+      const msg = (
+        error?.message ??
+        error?.error?.message ??
+        error?.errorType ??
+        ""
+      ).toLowerCase();
+      if (msg.includes("permission") || msg.includes("microphone") || msg.includes("media")) {
         toast.error("Microphone access required to use voice chat.");
+      } else if (msg.includes("meeting") || msg.includes("network") || msg.includes("daily")) {
+        toast.error("Network error. Check your connection and try again.");
       } else {
         toast.error("Voice chat error. Please try again.");
       }
@@ -164,10 +158,7 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
 
       const { assistantId } = (await res.json()) as { assistantId: string };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (vapiRef.current as any).start(assistantId, {
-        assistantOverrides: { model: { tools: [GO_TO_PAGE_TOOL] } },
-      });
+      vapiRef.current.start(assistantId);
     } catch (err) {
       console.error("Failed to start voice call", err);
       toast.error("Could not start voice chat. Please try again.");
@@ -191,18 +182,6 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <span className="text-xs font-medium text-muted-foreground">Voice</span>
-        {isActive && (
-          <span className="flex items-center gap-1.5 text-xs text-green-600">
-            <span className="size-1.5 animate-pulse rounded-full bg-green-500" />
-            Live
-          </span>
-        )}
-      </div>
-
-      {/* Body */}
       {showIdle ? (
         <VoiceCallIdle
           book={book}
@@ -214,7 +193,7 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
         />
       ) : (
         <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex flex-col items-center pt-4 pb-2">
+          <div className="flex flex-col items-center pt-6 pb-2">
             <VoiceWaveform volume={volume} isActive={isActive} />
           </div>
           <VoiceTranscript entries={transcript} />

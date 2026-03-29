@@ -60,6 +60,22 @@ export async function createVapiAssistant({
             content: `Book context:\n${context.slice(0, 12000)}`,
           },
         ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "go_to_page",
+              description: "Navigate the PDF viewer to a specific page number",
+              parameters: {
+                type: "object",
+                properties: {
+                  page: { type: "number", description: "1-based page number to navigate to" },
+                },
+                required: ["page"],
+              },
+            },
+          },
+        ],
       },
       voice: {
         provider: "11labs",

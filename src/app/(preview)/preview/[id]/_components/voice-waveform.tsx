@@ -9,22 +9,22 @@ interface VoiceWaveformProps {
 }
 
 // Multipliers per bar — tallest in the middle, shorter toward edges
-const MULTIPLIERS = [0.35, 0.55, 0.75, 1.0, 0.75, 0.55, 0.35];
+const MULTIPLIERS = [0.25, 0.45, 0.65, 0.85, 1.0, 0.85, 0.65, 0.45, 0.25];
 
 export function VoiceWaveform({ volume, isActive }: VoiceWaveformProps) {
   return (
-    <div className="flex h-12 items-center justify-center gap-1">
+    <div className="flex h-16 items-center justify-center gap-1.5">
       {MULTIPLIERS.map((mult, i) => {
         const heightPercent =
           isActive && volume > 0
-            ? Math.max(12, Math.min(100, volume * mult * 100))
-            : 12;
+            ? Math.max(10, Math.min(100, volume * mult * 100))
+            : 10;
 
         return (
           <div
             key={i}
             className={`w-1.5 rounded-full bg-primary transition-all duration-75 ${
-              isActive && volume === 0 ? "animate-pulse" : ""
+              isActive && volume === 0 ? "animate-pulse opacity-60" : ""
             }`}
             style={{ height: `${heightPercent}%` }}
           />

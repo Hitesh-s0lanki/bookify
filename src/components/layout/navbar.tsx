@@ -10,9 +10,7 @@ import {
   Menu,
   LogOut,
   Search,
-  PlusCircle,
   Sparkles,
-  BookOpen,
   ChevronRight,
   CreditCard,
   X,
@@ -36,9 +34,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/", label: "Home", icon: House },
   { href: "/library", label: "Library", icon: Library },
-  { href: "/upload", label: "Upload", icon: PlusCircle },
   { href: "/pricing", label: "Pricing", icon: CreditCard },
-  { href: "/my-library", label: "My Library", icon: BookOpen },
 ];
 
 // Links shown in the desktop nav bar (first 4)
@@ -90,7 +86,6 @@ export function Navbar() {
       <div className="h-[2px] w-full bg-linear-to-r from-primary/60 via-primary to-primary/60" />
 
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center px-4 sm:px-6">
-
         {/* ── Logo ── */}
         <Link
           href="/"
@@ -116,7 +111,7 @@ export function Navbar() {
                     "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-all duration-150",
                     active
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
                   <Icon className="size-3.5" />
@@ -129,7 +124,6 @@ export function Navbar() {
 
         {/* ── Right side ── */}
         <div className="ml-auto flex items-center gap-2">
-
           {/* Desktop search */}
           <form
             onSubmit={(e) => {
@@ -164,7 +158,11 @@ export function Navbar() {
             onClick={() => setSearchOpen((v) => !v)}
             aria-label="Search"
           >
-            {searchOpen ? <X className="size-4" /> : <Search className="size-4" />}
+            {searchOpen ? (
+              <X className="size-4" />
+            ) : (
+              <Search className="size-4" />
+            )}
           </Button>
 
           {/* Mobile menu */}
@@ -180,13 +178,18 @@ export function Navbar() {
                   <Menu className="size-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="flex w-72 flex-col gap-0 p-0">
+              <SheetContent
+                side="right"
+                className="flex w-72 flex-col gap-0 p-0"
+              >
                 <SheetHeader className="border-b px-4 py-3">
                   <SheetTitle className="flex items-center gap-2">
                     <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                       <Sparkles className="size-3.5 text-primary" />
                     </div>
-                    <span className="text-sm font-bold text-primary">Bookify</span>
+                    <span className="text-sm font-bold text-primary">
+                      Bookify
+                    </span>
                   </SheetTitle>
                 </SheetHeader>
 
@@ -200,8 +203,12 @@ export function Navbar() {
                         className="size-9"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{userName}</p>
-                        <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
+                        <p className="truncate text-sm font-semibold">
+                          {userName}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {userEmail}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -220,7 +227,7 @@ export function Navbar() {
                             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                             active
                               ? "bg-primary/10 text-primary"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
                           )}
                         >
                           <Icon className="size-4" />

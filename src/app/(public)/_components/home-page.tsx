@@ -2,11 +2,14 @@ import { BookOpen } from "lucide-react";
 
 import { HeroSection } from "./hero-section";
 import { LibraryContent } from "./library-content";
+import { ContinueReadingSection } from "./continue-reading-section";
 
 export function HomePage() {
   return (
     <div className="space-y-6">
       <HeroSection />
+
+      <ContinueReadingSection />
 
       <section className="pb-20">
         <div className="mb-4 flex items-center gap-2.5">

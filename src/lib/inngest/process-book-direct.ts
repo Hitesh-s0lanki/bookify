@@ -7,6 +7,7 @@ import {
   deleteChunksForBook,
   insertChunksWithEmbeddings,
 } from "@/lib/vector-store";
+import { generateBookSummaryForProcessedBook } from "@/modules/agents/actions/generate-book-summary";
 import { BookModel } from "@/modules/books/model";
 
 /**
@@ -87,10 +88,11 @@ export async function processBookDirect(payload: {
     // Step 6: Update status
     await connectToDatabase();
     const contextText = text.slice(0, 20_000);
-    await BookModel.updateOne(
-      { _id: bookId },
-      { status: "READY", contextText }
-    );
+    await BookModel.updateOne({ _id: bookId }, { contextText });
+
+    await generateBookSummaryForProcessedBook({ bookId });
+
+    await BookModel.updateOne({ _id: bookId }, { status: "READY" });
 
     return { bookId, chunksInserted: chunks.length };
   } catch (error) {
