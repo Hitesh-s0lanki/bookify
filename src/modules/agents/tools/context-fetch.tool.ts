@@ -30,14 +30,12 @@ function buildContextExcerpt(text: string, query?: string, maxChars = 4_000) {
   return normalizedText.slice(start, end);
 }
 
-export function createContextFetchTool() {
+export function createContextFetchTool(bookId: string) {
   return tool(
     async ({
-      bookId,
       query,
       maxChars,
     }: {
-      bookId: string;
       query?: string;
       maxChars?: number;
     }) => {
@@ -76,7 +74,6 @@ export function createContextFetchTool() {
       description:
         "Fetch existing Bookify context for a book, including summary data and a focused excerpt from the stored book text.",
       schema: z.object({
-        bookId: z.string().describe("The Bookify book id."),
         query: z
           .string()
           .optional()

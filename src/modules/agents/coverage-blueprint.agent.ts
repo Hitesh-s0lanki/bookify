@@ -19,6 +19,6 @@ export async function runCoverageBlueprintAgent(rawInput: CoverageBlueprintInput
     sessionId: input.sessionId,
     input,
     schema: coverageBlueprintSchema,
-    tools: [createContextFetchTool()],
+    tools: [createContextFetchTool(input.bookId)],
   });
 }

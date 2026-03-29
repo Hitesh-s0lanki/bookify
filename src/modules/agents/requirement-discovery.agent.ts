@@ -17,6 +17,6 @@ export async function runRequirementDiscoveryAgent(rawInput: RequirementDiscover
     sessionId: input.sessionId,
     input,
     schema: validatedRequirementSchema,
-    tools: [createContextFetchTool(), createWebSearchTool()],
+    tools: [createContextFetchTool(input.bookId), createWebSearchTool()],
   });
 }
