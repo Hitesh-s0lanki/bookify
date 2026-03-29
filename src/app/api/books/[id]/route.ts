@@ -23,6 +23,7 @@ function toBook(doc: {
   coverUrl?: string;
   pdfUrl: string;
   voicePersona?: string;
+  vapiAssistantId?: string;
   status: string;
   createdAt?: Date;
   description?: string;
@@ -48,6 +49,7 @@ function toBook(doc: {
     coverUrl: doc.coverUrl ?? "",
     pdfUrl: doc.pdfUrl,
     voicePersona: doc.voicePersona,
+    vapiAssistantId: doc.vapiAssistantId,
     status: normalizedStatus,
     createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
     description: doc.description,
