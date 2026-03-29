@@ -1,0 +1,243 @@
+import { auth } from "@clerk/nextjs/server";
+import { openai } from "@ai-sdk/openai";
+import { streamText, createUIMessageStream, createUIMessageStreamResponse, tool, zodSchema, stepCountIs } from "ai";
+import { z } from "zod";
+import type { NextRequest } from "next/server";
+
+import { connectToDatabase } from "@/lib/db";
+import { BookModel, type BookDocument } from "@/modules/books/model";
+import { ChatSessionModel, type StoredMessage, type ChatSessionDocument } from "@/modules/chat/model";
+import { generateQueryEmbedding } from "@/lib/api/embeddings";
+import { searchBookChunks } from "@/lib/vector-search";
+
+export const maxDuration = 30;
+
+// Accept both legacy { role, content } and v6 UIMessage { role, parts } formats
+const uiMessagePartSchema = z.object({ type: z.string() }).passthrough();
+
+const chatMessageSchema = z.union([
+  // v6 UIMessage format (sent by DefaultChatTransport)
+  z.object({
+    id: z.string().optional(),
+    role: z.enum(["user", "assistant"]),
+    parts: z.array(uiMessagePartSchema),
+  }),
+  // Legacy { role, content } format
+  z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string(),
+  }),
+]);
+
+const chatRequestSchema = z.object({
+  messages: z.array(chatMessageSchema).min(1),
+  sessionId: z.string().optional(),
+});
+
+const goToPageTool = tool({
+  description: "Navigate the PDF viewer to a specific page number.",
+  inputSchema: zodSchema(
+    z.object({
+      page: z.number().int().min(1).describe("The 1-based page number to navigate to"),
+    })
+  ),
+  // No execute — client handles navigation
+});
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
+  const { id: bookId } = await params;
+
+  const bodyParsed = chatRequestSchema.safeParse(await request.json());
+  if (!bodyParsed.success) {
+    return new Response(JSON.stringify({ error: "invalid_request" }), { status: 400 });
+  }
+  const { messages, sessionId: incomingSessionId } = bodyParsed.data;
+
+  await connectToDatabase();
+
+  // Load book and check readiness
+  // Books are shared resources — no per-user ownership check needed
+  const book = await BookModel.findById(bookId).lean<BookDocument & { _id: unknown }>();
+  if (!book) {
+    return new Response(JSON.stringify({ error: "not_found" }), { status: 404 });
+  }
+  if (book.status !== "ready" && book.status !== "READY") {
+    return new Response(JSON.stringify({ error: "book_not_ready" }), { status: 400 });
+  }
+
+  // Load or create ChatSession
+  let session;
+  let sessionId: string;
+
+  if (incomingSessionId) {
+    session = await ChatSessionModel.findById(incomingSessionId);
+    if (!session || session.userId !== userId) {
+      return new Response(JSON.stringify({ error: "session_not_found" }), { status: 404 });
+    }
+    sessionId = incomingSessionId;
+  } else {
+    session = await ChatSessionModel.create({ bookId, userId, messages: [] });
+    sessionId = session._id.toString();
+  }
+
+  // Extract text from a message (handles both legacy content and v6 parts formats)
+  function extractText(msg: (typeof messages)[number]): string {
+    if ("content" in msg && typeof msg.content === "string") return msg.content;
+    if ("parts" in msg && Array.isArray(msg.parts)) {
+      return msg.parts
+        .filter((p): p is { type: "text"; text: string } => p.type === "text" && "text" in p)
+        .map((p) => p.text)
+        .join("");
+    }
+    return "";
+  }
+
+  // Build simplified { role, content } messages for the LLM
+  const simplifiedMessages = messages.map((m) => ({
+    role: m.role,
+    content: extractText(m),
+  }));
+
+  // RAG: embed latest user message and retrieve relevant chunks
+  const lastUserMessage = [...simplifiedMessages].reverse().find((m) => m.role === "user");
+  const userText = lastUserMessage?.content ?? "";
+
+  if (!userText.trim()) {
+    return new Response(JSON.stringify({ error: "empty_message" }), { status: 400 });
+  }
+
+  const queryEmbedding = await generateQueryEmbedding(userText);
+  const chunks = await searchBookChunks({ bookId, queryEmbedding, limit: 8 });
+
+  const excerpts = chunks
+    .map((c) => `Page ${c.page}: ${c.chunkText}`)
+    .join("\n\n");
+
+  const systemPrompt = `You are an AI assistant helping the user understand the book "${book.title}" by ${book.author}.
+Use the following excerpts to answer the user's question.
+When referencing a specific passage, call the go_to_page tool to navigate there.
+
+Before answering, reason step-by-step inside <think>...</think> tags.
+After the closing </think> tag, write your final answer in plain prose.
+
+Excerpts:
+${excerpts}`;
+
+  // Stream response using createUIMessageStream for custom metadata injection
+  const stream = createUIMessageStream({
+    execute: async ({ writer }) => {
+      // Send sessionId as message-metadata so the client can persist it
+      writer.write({ type: "message-metadata", messageMetadata: { sessionId } });
+
+      const result = streamText({
+        model: openai("gpt-4o"),
+        system: systemPrompt,
+        messages: simplifiedMessages,
+        tools: { go_to_page: goToPageTool },
+        stopWhen: stepCountIs(1),
+        onFinish: async ({ text, toolCalls }) => {
+          try {
+            // Extract and strip reasoning
+            const reasoningMatch = text.match(/<think>([\s\S]*?)<\/think>/);
+            const reasoning = reasoningMatch ? reasoningMatch[1].trim() : null;
+            const cleanText = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+            // Write reasoning annotation back to the stream so the client receives it
+            if (reasoning) {
+              const reasoningId = crypto.randomUUID();
+              writer.write({ type: "reasoning-start", id: reasoningId });
+              writer.write({ type: "reasoning-delta", id: reasoningId, delta: reasoning });
+              writer.write({ type: "reasoning-end", id: reasoningId });
+            }
+
+            // Persist to MongoDB
+            const userMsg = {
+              id: crypto.randomUUID(),
+              role: "user" as const,
+              content: userText,
+              reasoning: null,
+              toolCalls: [],
+            };
+            const assistantMsg = {
+              id: crypto.randomUUID(),
+              role: "assistant" as const,
+              content: cleanText,
+              reasoning,
+              toolCalls: toolCalls.map((tc) => ({
+                toolName: tc.toolName,
+                args: tc.input,
+              })),
+            };
+
+            await ChatSessionModel.findByIdAndUpdate(sessionId, {
+              $push: { messages: { $each: [userMsg, assistantMsg] } },
+            });
+          } catch {
+            // Ignore persistence errors — stream already sent
+          }
+        },
+      });
+
+      // Merge the LLM stream — reasoning chunks will be written in onFinish
+      writer.merge(result.toUIMessageStream());
+
+      // Wait for the full stream (including onFinish) to complete
+      // before this execute Promise resolves (which would close the writer)
+      await result.consumeStream();
+    },
+  });
+
+  return createUIMessageStreamResponse({ stream });
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
+  const { id: _bookId } = await params;
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("sessionId");
+
+  if (!sessionId) {
+    return new Response(JSON.stringify({ error: "sessionId required" }), { status: 400 });
+  }
+
+  await connectToDatabase();
+
+  const session = await ChatSessionModel.findById(sessionId).lean<ChatSessionDocument & { _id: unknown; userId: string; messages: StoredMessage[] }>();
+  if (!session) {
+    return new Response(JSON.stringify({ error: "not_found" }), { status: 404 });
+  }
+  if (session.userId !== userId) {
+    return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
+  }
+
+  const storedMessages = session.messages ?? [];
+
+  // Convert stored messages to AI SDK v6 UIMessage format
+  const uiMessages = storedMessages.map((m) => ({
+    id: m.id ?? crypto.randomUUID(),
+    role: m.role as "user" | "assistant",
+    content: m.content,
+    parts: [
+      ...(m.reasoning ? [{ type: "reasoning" as const, text: m.reasoning, state: "done" as const }] : []),
+      { type: "text" as const, text: m.content },
+    ],
+    metadata: {},
+  }));
+
+  return Response.json({ sessionId: sessionId.toString(), messages: uiMessages });
+}

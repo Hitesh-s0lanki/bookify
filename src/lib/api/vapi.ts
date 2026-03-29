@@ -52,7 +52,8 @@ export async function createVapiAssistant({
             role: "system",
             content:
               `You are an expert on the book "${title}". ` +
-              "Use the provided context to answer user questions naturally.",
+              "Use the provided context to answer user questions naturally. " +
+              "When referencing a specific passage or page, call the go_to_page function to navigate the viewer there.",
           },
           {
             role: "system",

@@ -7,6 +7,7 @@ export interface Book {
   coverUrl: string;
   pdfUrl: string;
   voicePersona?: string;
+  vapiAssistantId?: string;
   status: BookStatus;
   createdAt: string;
   /** Optional metadata for detail page */
