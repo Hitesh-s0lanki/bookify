@@ -3,11 +3,18 @@
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
 
 import { BookViewer } from "./_components/book-viewer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Book } from "@/types/book";
+import { GuestLimitModal } from "@/components/gates/GuestLimitModal";
+import { UpgradeModal } from "@/components/gates/UpgradeModal";
+
+const GUEST_BOOKS_KEY = "bookify_guest_books";
+const GUEST_LIMIT = 2;
+const FREE_LIMIT = 5;
 
 interface BookDetailContentProps {
   params: Promise<{ id: string }>;
@@ -35,9 +42,12 @@ function BookDetailSkeleton() {
 
 export function BookDetailContent({ params }: BookDetailContentProps) {
   const { id } = use(params);
+  const { isSignedIn } = useAuth();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,9 +64,7 @@ export function BookDetailContent({ params }: BookDetailContentProps) {
         if (!cancelled && data) setBook(data);
       })
       .catch(() => {
-        if (!cancelled) {
-          toast.error("Could not load book");
-        }
+        if (!cancelled) toast.error("Could not load book");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -70,6 +78,49 @@ export function BookDetailContent({ params }: BookDetailContentProps) {
     setBook(updated);
   }, []);
 
+  const checkAccess = useCallback(async (): Promise<boolean> => {
+    // Guest path
+    if (!isSignedIn) {
+      const raw = localStorage.getItem(GUEST_BOOKS_KEY);
+      const guestBooks: string[] = raw ? JSON.parse(raw) : [];
+      if (guestBooks.includes(id)) return true; // resuming
+      if (guestBooks.length >= GUEST_LIMIT) {
+        setShowGuestModal(true);
+        return false;
+      }
+      localStorage.setItem(
+        GUEST_BOOKS_KEY,
+        JSON.stringify([...guestBooks, id])
+      );
+      return true;
+    }
+
+    // Authenticated path — check plan
+    try {
+      const [meRes, progressRes] = await Promise.all([
+        fetch("/api/users/me"),
+        fetch(`/api/reading-progress?bookId=${id}`),
+      ]);
+      const me = await meRes.json();
+      const existingProgress = await progressRes.json();
+
+      if (me.plan === "pro") return true;
+
+      // Free plan: allowed if book already has progress OR total count < 5
+      if (existingProgress !== null) return true;
+
+      const countRes = await fetch("/api/reading-progress?count=1");
+      const { count } = await countRes.json();
+      if (count < FREE_LIMIT) return true;
+
+      setShowUpgradeModal(true);
+      return false;
+    } catch {
+      // On error, allow access — don't block the reader
+      return true;
+    }
+  }, [id, isSignedIn]);
+
   if (loading) return <BookDetailSkeleton />;
   if (notFound || !book) {
     return (
@@ -82,5 +133,11 @@ export function BookDetailContent({ params }: BookDetailContentProps) {
     );
   }
 
-  return <BookViewer book={book} onBookUpdate={handleBookUpdate} />;
+  return (
+    <>
+      <BookViewer book={book} onBookUpdate={handleBookUpdate} onCheckAccess={checkAccess} />
+      <GuestLimitModal open={showGuestModal} onOpenChange={setShowGuestModal} />
+      <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
+    </>
+  );
 }
