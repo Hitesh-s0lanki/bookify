@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, BookOpen, MessageCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,81 @@ import type { Book } from "@/types/book";
 import { PreviewPdfPanel } from "./preview-pdf-panel";
 import { SidePanel } from "./side-panel";
 
+const GUEST_PROGRESS_KEY = "bookify_guest_progress";
+const SAVE_DEBOUNCE_MS = 2000;
+
 interface PreviewShellProps {
   book: Book;
+  initialPage?: number;
+  isSignedIn?: boolean;
 }
 
-export function PreviewShell({ book }: PreviewShellProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+export function PreviewShell({
+  book,
+  initialPage = 1,
+  isSignedIn = false,
+}: PreviewShellProps) {
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [numPages, setNumPages] = useState<number | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync initialPage if it arrives after first render (async progress load)
+  useEffect(() => {
+    if (initialPage > 1) {
+      Promise.resolve().then(() => setCurrentPage(initialPage));
+    }
+  }, [initialPage]);
+
+  const saveProgress = useCallback(
+    (page: number, total: number | null) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        if (isSignedIn) {
+          fetch("/api/reading-progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bookId: book.id,
+              currentPage: page,
+              totalPages: total ?? 0,
+            }),
+          }).catch(() => {
+            // Silently fail — progress will save next time
+          });
+        } else {
+          // Guest: save to localStorage
+          try {
+            const raw = localStorage.getItem(GUEST_PROGRESS_KEY);
+            const guestProgress = raw ? JSON.parse(raw) : {};
+            guestProgress[book.id] = {
+              page,
+              title: book.title,
+              coverUrl: book.coverUrl,
+            };
+            localStorage.setItem(GUEST_PROGRESS_KEY, JSON.stringify(guestProgress));
+          } catch {
+            // Silently fail
+          }
+        }
+      }, SAVE_DEBOUNCE_MS);
+    },
+    [book.id, book.title, book.coverUrl, isSignedIn]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      saveProgress(page, numPages);
+    },
+    [numPages, saveProgress]
+  );
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, []);
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -69,7 +137,12 @@ export function PreviewShell({ book }: PreviewShellProps) {
               </SheetHeader>
               <div className="mx-auto my-2 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
               <div className="flex-1 overflow-hidden">
-                <SidePanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={setCurrentPage} />
+                <SidePanel
+                  book={book}
+                  currentPage={currentPage}
+                  numPages={numPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             </SheetContent>
           </Sheet>
@@ -78,19 +151,24 @@ export function PreviewShell({ book }: PreviewShellProps) {
 
       {/* Main layout */}
       <div className="grid flex-1 overflow-hidden md:grid-cols-2">
-        {/* PDF panel — full width on mobile */}
+        {/* PDF panel */}
         <div className="overflow-hidden md:border-r">
           <PreviewPdfPanel
             bookId={book.id}
             currentPage={currentPage}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
             onNumPagesChange={setNumPages}
           />
         </div>
 
         {/* Side panel — desktop only */}
         <div className="hidden overflow-hidden md:block">
-          <SidePanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={setCurrentPage} />
+          <SidePanel
+            book={book}
+            currentPage={currentPage}
+            numPages={numPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     </div>

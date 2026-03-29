@@ -2,9 +2,16 @@
 
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
 
 import type { Book } from "@/types/book";
 import { PreviewShell } from "./preview-shell";
+
+const GUEST_PROGRESS_KEY = "bookify_guest_progress";
+
+interface GuestProgress {
+  [bookId: string]: { page: number; title: string; coverUrl: string };
+}
 
 interface PreviewContentProps {
   params: Promise<{ id: string }>;
@@ -12,9 +19,12 @@ interface PreviewContentProps {
 
 export function PreviewContent({ params }: PreviewContentProps) {
   const { id } = use(params);
+  const { isSignedIn } = useAuth();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialPage, setInitialPage] = useState(1);
 
+  // Load book data
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/books/${id}`)
@@ -22,7 +32,7 @@ export function PreviewContent({ params }: PreviewContentProps) {
         if (!res.ok) throw new Error("Failed to load book");
         return res.json();
       })
-      .then((data) => {
+      .then((data: Book) => {
         if (!cancelled) setBook(data);
       })
       .catch(() => {
@@ -35,6 +45,38 @@ export function PreviewContent({ params }: PreviewContentProps) {
       cancelled = true;
     };
   }, [id]);
+
+  // Load saved reading progress
+  useEffect(() => {
+    if (isSignedIn === undefined) return; // Clerk not loaded yet
+
+    if (isSignedIn) {
+      fetch(`/api/reading-progress?bookId=${id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.currentPage === "number" && data.currentPage > 1) {
+            setInitialPage(data.currentPage);
+          }
+        })
+        .catch(() => {
+          // Silently fail — start from page 1
+        });
+    } else {
+      // Guest: read from localStorage
+      Promise.resolve().then(() => {
+        try {
+          const raw = localStorage.getItem(GUEST_PROGRESS_KEY);
+          const guestProgress: GuestProgress = raw ? JSON.parse(raw) : {};
+          const saved = guestProgress[id];
+          if (saved && saved.page > 1) {
+            setInitialPage(saved.page);
+          }
+        } catch {
+          // Silently fail
+        }
+      });
+    }
+  }, [id, isSignedIn]);
 
   if (loading) {
     return (
@@ -52,5 +94,11 @@ export function PreviewContent({ params }: PreviewContentProps) {
     );
   }
 
-  return <PreviewShell book={book} />;
+  return (
+    <PreviewShell
+      book={book}
+      initialPage={initialPage}
+      isSignedIn={isSignedIn ?? false}
+    />
+  );
 }
