@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Book } from "@/types/book";
 
 import { ChatPanel } from "./chat-panel";
+import { SummaryPanel } from "./summary-panel";
 import { VoicePanel } from "./voice-panel";
 
 interface SidePanelProps {
@@ -46,11 +47,14 @@ export function SidePanel({ book, currentPage, numPages, onPageChange }: SidePan
         </div>
       </div>
 
+      <TabsContent value="summary" className="min-h-0 overflow-hidden">
+        <SummaryPanel book={book} />
+      </TabsContent>
       <TabsContent value="chat" className="min-h-0 overflow-hidden">
         <ChatPanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={onPageChange} />
       </TabsContent>
       <TabsContent value="voice" className="overflow-hidden">
-        <VoicePanel book={book} />
+        <VoicePanel book={book} numPages={numPages} onPageChange={onPageChange} />
       </TabsContent>
     </Tabs>
   );
