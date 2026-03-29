@@ -4,20 +4,30 @@
 import Image from "next/image";
 import { Mic, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import type { Book } from "@/types/book";
+import type { VoicePersona } from "@/modules/books/constants";
+import { VOICE_PERSONAS } from "@/modules/books/constants";
 import type { TranscriptEntry } from "./voice-transcript";
 import { VoiceTranscript } from "./voice-transcript";
 
 interface VoiceCallIdleProps {
   book: Book;
   isConnecting: boolean;
+  selectedPersona: VoicePersona;
+  onPersonaChange: (persona: VoicePersona) => void;
   /** Transcript from the just-ended call — shown read-only, no DB fetch */
   endedTranscript: TranscriptEntry[];
   onStart: () => void;
 }
 
-export function VoiceCallIdle({ book, isConnecting, endedTranscript, onStart }: VoiceCallIdleProps) {
+export function VoiceCallIdle({
+  book,
+  isConnecting,
+  selectedPersona,
+  onPersonaChange,
+  endedTranscript,
+  onStart,
+}: VoiceCallIdleProps) {
   const hasEndedTranscript = endedTranscript.length > 0;
 
   return (
@@ -52,19 +62,35 @@ export function VoiceCallIdle({ book, isConnecting, endedTranscript, onStart }: 
             <p className="text-sm font-semibold">{book.title}</p>
             <p className="text-xs text-muted-foreground">{book.author}</p>
           </div>
-          {book.voicePersona && (
-            <Badge variant="secondary" className="text-xs">
-              {book.voicePersona}
-            </Badge>
-          )}
+
+          {/* Voice persona selector */}
+          <div className="w-full space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Choose voice</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {VOICE_PERSONAS.map((persona) => (
+                <button
+                  key={persona}
+                  onClick={() => onPersonaChange(persona)}
+                  disabled={isConnecting}
+                  className={`rounded-lg border px-2 py-1.5 text-xs transition-colors ${
+                    selectedPersona === persona
+                      ? "border-primary bg-primary/10 font-medium text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  {persona}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="mt-4 w-full space-y-2">
+      <div className="mt-4 w-full">
         <Button
           className="w-full gap-2 rounded-full"
           onClick={onStart}
-          disabled={isConnecting || !book.vapiAssistantId}
+          disabled={isConnecting}
         >
           <Mic className="size-4" />
           {isConnecting
@@ -73,11 +99,6 @@ export function VoiceCallIdle({ book, isConnecting, endedTranscript, onStart }: 
               ? "Start new call"
               : "Start Voice Chat"}
         </Button>
-        {!book.vapiAssistantId && (
-          <p className="text-center text-xs text-muted-foreground">
-            Voice not available for this book
-          </p>
-        )}
       </div>
     </div>
   );

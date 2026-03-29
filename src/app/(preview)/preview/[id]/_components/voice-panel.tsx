@@ -6,6 +6,8 @@ import Vapi from "@vapi-ai/web";
 import { toast } from "sonner";
 
 import type { Book } from "@/types/book";
+import type { VoicePersona } from "@/modules/books/constants";
+import { VOICE_PERSONAS } from "@/modules/books/constants";
 import type { TranscriptEntry } from "./voice-transcript";
 import { VoiceCallIdle } from "./voice-call-idle";
 import { VoiceCallControls } from "./voice-call-controls";
@@ -51,6 +53,7 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [endedTranscript, setEndedTranscript] = useState<TranscriptEntry[]>([]);
+  const [selectedPersona, setSelectedPersona] = useState<VoicePersona>(VOICE_PERSONAS[0]);
 
   // Initialise Vapi once on mount
   useEffect(() => {
@@ -138,8 +141,8 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
     };
   }, []);  
 
-  function handleStart() {
-    if (!vapiRef.current || !book.vapiAssistantId) return;
+  async function handleStart() {
+    if (!vapiRef.current) return;
     setCallState("connecting");
     setTranscript([]);
     transcriptRef.current = [];
@@ -147,10 +150,29 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
     setVolume(0);
     setEndedTranscript([]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (vapiRef.current as any).start(book.vapiAssistantId, {
-      assistantOverrides: { model: { tools: [GO_TO_PAGE_TOOL] } },
-    });
+    try {
+      // Create a fresh Vapi assistant for the selected persona
+      const res = await fetch(`/api/books/${bookIdRef.current}/voice-assistant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voicePersona: selectedPersona }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create voice assistant");
+      }
+
+      const { assistantId } = (await res.json()) as { assistantId: string };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (vapiRef.current as any).start(assistantId, {
+        assistantOverrides: { model: { tools: [GO_TO_PAGE_TOOL] } },
+      });
+    } catch (err) {
+      console.error("Failed to start voice call", err);
+      toast.error("Could not start voice chat. Please try again.");
+      setCallState("idle");
+    }
   }
 
   function handleEndCall() {
@@ -185,6 +207,8 @@ export function VoicePanel({ book, numPages, onPageChange }: VoicePanelProps) {
         <VoiceCallIdle
           book={book}
           isConnecting={callState === "connecting"}
+          selectedPersona={selectedPersona}
+          onPersonaChange={setSelectedPersona}
           endedTranscript={endedTranscript}
           onStart={handleStart}
         />
