@@ -27,13 +27,14 @@ export const validatedRequirementSchema = z.object({
   goal: z.string().min(1),
   focus: z.array(z.string()).default([]),
   style: z.string().default("clear"),
-  length: z.string().default("medium"),
+  length: z.string().default("comprehensive"),
   format: z.string().default("markdown"),
   audience: z.string().optional(),
   tone: z.string().optional(),
   exclusions: z.array(z.string()).default([]),
   constraints: z.array(z.string()).default([]),
   language: z.string().default("en"),
+  detectEnumerables: z.boolean().default(true),
 });
 
 export const coverageTopicSchema = z.object({
@@ -46,6 +47,14 @@ export const coverageTopicSchema = z.object({
 export const coverageBlueprintSchema = z.object({
   requiredChapters: z.array(z.number().int().positive()).default([]),
   topics: z.array(coverageTopicSchema).max(AGENT_LIMITS.maxTopics),
+  enumerables: z
+    .object({
+      detected: z.boolean(),
+      type: z.string(),
+      count: z.number().int().nonnegative(),
+      label: z.string(),
+    })
+    .optional(),
 });
 
 export const topicDispatchJobSchema = z.object({
@@ -71,6 +80,9 @@ export const topicExpansionResultItemSchema = z.object({
   title: z.string().min(1),
   detailedSummary: z.string().min(1),
   keyPoints: z.array(z.string()).default([]),
+  examples: z.array(z.string()).default([]),
+  practicalApplication: z.string().optional(),
+  whyItMatters: z.string().optional(),
   relatedChapters: z.array(z.number().int().positive()).default([]),
   status: z.enum(["done", "needs_retry", "failed"]).default("done"),
 });
@@ -84,6 +96,10 @@ export const synthesizedTopicSchema = z.object({
   topicId: z.string().min(1),
   title: z.string().min(1),
   summary: z.string().min(1),
+  keyPoints: z.array(z.string()).default([]),
+  examples: z.array(z.string()).default([]),
+  practicalApplication: z.string().optional(),
+  whyItMatters: z.string().optional(),
 });
 
 export const topicSynthesisResultSchema = z.object({

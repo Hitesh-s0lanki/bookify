@@ -49,6 +49,8 @@ export async function runTopicSynthesisAgent(rawInput: TopicSynthesisInput) {
       topicId: topic.topicId,
       title: topic.title,
       summary: condenseSummary(topic.summaries[0] ?? ""),
+      keyPoints: [],
+      examples: [],
     })),
   };
 }
