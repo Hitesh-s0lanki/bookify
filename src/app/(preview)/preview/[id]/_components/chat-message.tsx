@@ -23,7 +23,6 @@ type ToolPart = {
 
 export function ChatMessage({ message, onPageChange }: ChatMessageProps) {
   if (message.role === "user") {
-    // Extract text content from text parts
     const textContent = (message.parts ?? [])
       .filter((p) => p.type === "text")
       .map((p) => (p as TextPart).text)
@@ -31,38 +30,37 @@ export function ChatMessage({ message, onPageChange }: ChatMessageProps) {
 
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-muted px-3 py-2 text-sm">
+        <div className="max-w-[82%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm text-primary-foreground shadow-sm">
           {textContent}
         </div>
       </div>
     );
   }
 
-  // Find reasoning part
   const reasoningPart = message.parts?.find((p) => p.type === "reasoning") as ReasoningPart | undefined;
 
-  // Extract text content from text parts
   const textContent = (message.parts ?? [])
     .filter((p) => p.type === "text")
     .map((p) => (p as TextPart).text)
     .join("");
 
-  // Find tool parts (go_to_page)
   const toolParts = (message.parts ?? []).filter((p) => p.type.startsWith("tool-")) as ToolPart[];
 
   return (
-    <div className="flex justify-start">
-      <div className="max-w-[90%] space-y-1">
+    <div className="flex items-start">
+      <div className="min-w-0 flex-1 space-y-1.5">
         {reasoningPart?.text && (
           <ReasoningBlock reasoning={reasoningPart.text} />
         )}
 
-        <div className="prose prose-sm dark:prose-invert text-sm">
-          <Markdown>{textContent}</Markdown>
-        </div>
+        {textContent && (
+          <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <Markdown>{textContent}</Markdown>
+          </div>
+        )}
 
         {toolParts.length > 0 && (
-          <div className="flex flex-wrap gap-1 pt-1">
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
             {toolParts.map((part) => {
               if (part.toolName === "go_to_page") {
                 const page = (part.input as { page: number }).page;

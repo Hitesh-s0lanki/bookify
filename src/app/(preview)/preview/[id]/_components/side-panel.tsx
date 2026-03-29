@@ -46,7 +46,7 @@ export function SidePanel({ book, currentPage, numPages, onPageChange }: SidePan
         </div>
       </div>
 
-      <TabsContent value="chat" className="overflow-hidden">
+      <TabsContent value="chat" className="min-h-0 overflow-hidden">
         <ChatPanel book={book} currentPage={currentPage} numPages={numPages} onPageChange={onPageChange} />
       </TabsContent>
       <TabsContent value="voice" className="overflow-hidden">

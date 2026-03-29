@@ -12,7 +12,7 @@ interface VoicePanelProps {
 export function VoicePanel({ book }: VoicePanelProps) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6 py-8 text-center">
-      <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border bg-muted/40 p-2">
+      <div className="relative w-full max-w-xs  p-2">
         <Image
           src="/voice.gif"
           alt="Voice interface preview"

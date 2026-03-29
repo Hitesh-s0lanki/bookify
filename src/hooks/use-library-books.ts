@@ -9,10 +9,11 @@ interface UseLibraryBooksOptions {
   query?: string;
   toastOnError?: boolean;
   includeAllStatuses?: boolean;
+  limit?: number;
 }
 
 export function useLibraryBooks(options: UseLibraryBooksOptions = {}) {
-  const { query, toastOnError = true, includeAllStatuses = false } = options;
+  const { query, toastOnError = true, includeAllStatuses = false, limit } = options;
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export function useLibraryBooks(options: UseLibraryBooksOptions = {}) {
     const params = new URLSearchParams();
     if (query?.trim()) params.set("q", query.trim());
     if (includeAllStatuses) params.set("all", "1");
+    if (limit) params.set("limit", String(limit));
     const url = params.size > 0 ? `/api/books?${params.toString()}` : "/api/books";
 
     fetch(url)
@@ -44,7 +46,7 @@ export function useLibraryBooks(options: UseLibraryBooksOptions = {}) {
     return () => {
       cancelled = true;
     };
-  }, [query, toastOnError, includeAllStatuses]);
+  }, [query, toastOnError, includeAllStatuses, limit]);
 
   return { books, loading, error };
 }

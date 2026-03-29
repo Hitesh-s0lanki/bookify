@@ -2,10 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
-
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-
 import { ChatMessage } from "./chat-message";
 
 interface ChatMessageListProps {
@@ -16,20 +12,24 @@ interface ChatMessageListProps {
 
 export function ChatMessageList({ messages, isLoading, onPageChange }: ChatMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages[messages.length - 1];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, lastMessage?.parts]);
 
-  // Show skeleton when loading and last message has no content yet
-  const showSkeleton =
+  const showTyping =
     isLoading &&
     (!lastMessage || lastMessage.role !== "assistant" || lastMessage.parts.length === 0);
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="flex flex-col gap-4 px-4 py-4">
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-y-auto overflow-x-hidden"
+      style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--border)) transparent" }}
+    >
+      <div className="flex flex-col gap-5 px-4 py-4">
         {messages.map((message) => (
           <ChatMessage
             key={message.id}
@@ -37,17 +37,18 @@ export function ChatMessageList({ messages, isLoading, onPageChange }: ChatMessa
             onPageChange={onPageChange}
           />
         ))}
-        {showSkeleton && (
-          <div className="flex justify-start">
-            <div className="w-48 space-y-2">
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-4/5" />
-              <Skeleton className="h-3 w-3/5" />
-            </div>
+
+        {/* Typing indicator */}
+        {showTyping && (
+          <div className="flex items-center gap-1 py-1">
+            <span className="size-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="size-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="size-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
           </div>
         )}
+
         <div ref={bottomRef} />
       </div>
-    </ScrollArea>
+    </div>
   );
 }

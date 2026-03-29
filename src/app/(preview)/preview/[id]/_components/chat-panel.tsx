@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
-import { RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { Book } from "@/types/book";
@@ -127,23 +126,9 @@ export function ChatPanel({ book, numPages, onPageChange }: ChatPanelProps) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <span className="text-xs font-medium text-muted-foreground">Chat</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          onClick={handleNewChat}
-        >
-          <RotateCcw className="size-3" />
-          New chat
-        </Button>
-      </div>
-
       {/* Error banner */}
       {error && (
-        <div className="mx-4 mt-2 flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <div className="mx-3 mt-2 flex items-center justify-between rounded-xl border border-destructive/20 bg-destructive/8 px-3 py-2 text-xs text-destructive">
           <span>
             {error.message?.includes("book_not_ready")
               ? "This book is still processing. Try again shortly."
@@ -167,21 +152,25 @@ export function ChatPanel({ book, numPages, onPageChange }: ChatPanelProps) {
       )}
 
       {/* Body */}
-      {messages.length === 0 ? (
-        <ChatWelcome bookTitle={book.title} onSuggest={handleSuggest} />
-      ) : (
-        <ChatMessageList
-          messages={messages}
-          isLoading={isLoading}
-          onPageChange={onPageChange}
-        />
-      )}
+      <div className="flex min-h-0 flex-1 flex-col">
+        {messages.length === 0 ? (
+          <ChatWelcome book={book} onSuggest={handleSuggest} />
+        ) : (
+          <ChatMessageList
+            messages={messages}
+            isLoading={isLoading}
+            onPageChange={onPageChange}
+          />
+        )}
+      </div>
 
       <ChatInput
         input={input}
         isLoading={isLoading}
+        hasMessages={messages.length > 0}
         onInputChange={setInput}
         onSubmit={handleSubmit}
+        onNewChat={handleNewChat}
       />
     </div>
   );
