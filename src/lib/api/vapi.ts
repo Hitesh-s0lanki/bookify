@@ -52,11 +52,28 @@ export async function createVapiAssistant({
             role: "system",
             content:
               `You are an expert on the book "${title}". ` +
-              "Use the provided context to answer user questions naturally.",
+              "Use the provided context to answer user questions naturally. " +
+              "When referencing a specific passage or page, call the go_to_page function to navigate the viewer there.",
           },
           {
             role: "system",
             content: `Book context:\n${context.slice(0, 12000)}`,
+          },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "go_to_page",
+              description: "Navigate the PDF viewer to a specific page number",
+              parameters: {
+                type: "object",
+                properties: {
+                  page: { type: "number", description: "1-based page number to navigate to" },
+                },
+                required: ["page"],
+              },
+            },
           },
         ],
       },

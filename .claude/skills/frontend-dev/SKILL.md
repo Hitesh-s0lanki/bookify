@@ -116,7 +116,7 @@ project-root/
 
 ### Key Conventions
 
-- **Route Groups** `(auth)`, `(protected)`, `(public)` — separate layout/middleware concerns without affecting URL paths.
+- **Route Groups** `(auth)`, `(protected)`, `(public)` — separate layout/proxy concerns without affecting URL paths.
 - **`_components/`** inside page folders — co-located, page-scoped components. The underscore prefix tells Next.js to skip it as a route segment.
 - **`modules/`** — domain-driven feature slices. Each module owns its schemas, types, actions, and tRPC procedures.
 - **`lib/api/`** — REST/fetch wrappers for external backends. One file per domain.
@@ -480,7 +480,7 @@ const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
 ## Auth (Clerk)
 
-### Middleware (`middleware.ts`)
+### Middleware (`proxy.ts`)
 
 ```ts
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";

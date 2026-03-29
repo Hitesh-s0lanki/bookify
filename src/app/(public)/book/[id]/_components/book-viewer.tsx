@@ -46,11 +46,13 @@ const POLL_INTERVAL = 5000;
 interface BookViewerProps {
   book: Book;
   onBookUpdate?: (book: Book) => void;
+  onCheckAccess?: () => Promise<boolean>;
 }
 
 export function BookViewer({
   book: initialBook,
   onBookUpdate,
+  onCheckAccess,
 }: BookViewerProps) {
   const router = useRouter();
   const [book, setBook] = useState(initialBook);
@@ -243,11 +245,15 @@ export function BookViewer({
                   </div>
                 )}
                 {isReady && (
-                  <Button className="gap-2" asChild>
-                    <Link href={`/preview/${book.id}`}>
-                      <Eye className="size-4" />
-                      Preview & Chat
-                    </Link>
+                  <Button
+                    className="gap-2"
+                    onClick={async () => {
+                      const allowed = onCheckAccess ? await onCheckAccess() : true;
+                      if (allowed) window.location.href = `/preview/${book.id}`;
+                    }}
+                  >
+                    <Eye className="size-4" />
+                    Preview & Chat
                   </Button>
                 )}
               </div>
@@ -272,11 +278,15 @@ export function BookViewer({
                 </div>
               )}
               {isReady && (
-                <Button className="w-full gap-2" asChild>
-                  <Link href={`/preview/${book.id}`}>
-                    <Eye className="size-4" />
-                    Preview & Chat
-                  </Link>
+                <Button
+                  className="w-full gap-2"
+                  onClick={async () => {
+                    const allowed = onCheckAccess ? await onCheckAccess() : true;
+                    if (allowed) window.location.href = `/preview/${book.id}`;
+                  }}
+                >
+                  <Eye className="size-4" />
+                  Preview & Chat
                 </Button>
               )}
             </div>

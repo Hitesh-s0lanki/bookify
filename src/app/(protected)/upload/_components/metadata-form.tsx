@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CoverUpload } from "@/app/(protected)/upload/_components/cover-upload";
 import { PdfUpload } from "@/app/(protected)/upload/_components/pdf-upload";
 import { MarkdownEditor } from "@/components/markdown-editor";
-import { SUMMARY_PROMPT } from "@/modules/summary/constant";
+import { DEFAULT_BOOK_SUMMARY_REQUEST } from "@/modules/summary/default-request";
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 const ALLOWED_COVER_TYPES = new Set(["image/jpeg", "image/jpg", "image/png"]);
@@ -66,7 +66,9 @@ export function MetadataForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [extracted, setExtracted] = useState(false);
   const [extractionFailed, setExtractionFailed] = useState(false);
-  const [summaryPrompt, setSummaryPrompt] = useState(SUMMARY_PROMPT);
+  const [summaryPrompt, setSummaryPrompt] = useState(
+    DEFAULT_BOOK_SUMMARY_REQUEST,
+  );
   const extractedRef = useRef(false);
 
   const pdfError = useMemo(() => validatePdfFile(pdfFile), [pdfFile]);
@@ -192,6 +194,7 @@ export function MetadataForm() {
       formData.append("description", metadata.description.trim());
       formData.append("genre", metadata.genre.trim());
       formData.append("tags", JSON.stringify(metadata.tags));
+      formData.append("summaryPrompt", summaryPrompt.trim());
       formData.append("pdf", pdfFile);
       formData.append("cover", coverFile);
 
@@ -241,9 +244,9 @@ export function MetadataForm() {
 
   return (
     <div className="space-y-0">
-      <div className="grid grid-cols-3 gap-5 p-5">
+      <div className="grid grid-cols-1 gap-5 p-3 sm:p-5 md:grid-cols-3">
         {/* Step 2 — Extraction */}
-        <FormSection className="col-span-2 h-full">
+        <FormSection className="order-2 h-full md:order-1 md:col-span-2">
           {isExtracting && (
             <div className="flex items-center gap-4 rounded-xl bg-primary/10 px-4 py-4 dark:bg-primary/15 h-full ">
               <span className="relative flex size-2.5 shrink-0">
@@ -348,7 +351,7 @@ export function MetadataForm() {
         </FormSection>
 
         {/* Step 1 — File Uploads */}
-        <FormSection>
+        <FormSection className="order-1 md:order-2">
           <PdfUpload
             file={pdfFile}
             onFileChange={handlePdfChange}
@@ -363,27 +366,27 @@ export function MetadataForm() {
           />
         </FormSection>
 
-        <FormSection className="col-span-3">
+        <FormSection className="order-3 md:col-span-3">
           <MarkdownEditor
             value={summaryPrompt}
             onChange={(val) => setSummaryPrompt(val)}
-            placeholder="No description extracted — write one here…"
+            placeholder="How should Bookify summarize this book?"
             disabled={isBusy}
-            label="Summary Prompt"
+            label="Summary Instructions"
           />
         </FormSection>
       </div>
 
       {/* Step 3 — Upload */}
-      <FormSection className="px-5 flex justify-between items-center space-y-2">
-        <span className="text-sm text-muted-foreground/80 self-end px-2">
+      <FormSection className="flex flex-col gap-3 px-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <span className="text-sm text-muted-foreground/80">
           Providing a good summary can help you get useful results from Bookify
           faster!
         </span>
         <Button
           onClick={onUploadBook}
           disabled={!hasMetadata || isBusy}
-          className="gap-2"
+          className="w-full gap-2 sm:w-auto"
         >
           {isUploading && <Loader2 className="size-5 animate-spin" />}
           {isUploading ? "Uploading…" : "Upload book"}

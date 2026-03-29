@@ -7,6 +7,7 @@ export interface Book {
   coverUrl: string;
   pdfUrl: string;
   voicePersona?: string;
+  vapiAssistantId?: string;
   status: BookStatus;
   createdAt: string;
   /** Optional metadata for detail page */
@@ -14,4 +15,5 @@ export interface Book {
   genre?: string;
   tags?: string[];
   failureReason?: string;
+  summary?: string | null;
 }

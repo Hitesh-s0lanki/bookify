@@ -49,7 +49,7 @@ export function BookCard({ book }: BookCardProps) {
           {book.title}
         </h3>
 
-        <div className="space-y-1 sm:space-y-1.5">
+        <div className="space-y-1 sm:space-y-1.5 flex flex-col">
           <p className="inline-flex items-center gap-1 text-xs text-muted-foreground sm:gap-1.5 sm:text-sm">
             <UserRound className="size-3 shrink-0 sm:size-3.5" />
             <span className="line-clamp-1">{book.author}</span>

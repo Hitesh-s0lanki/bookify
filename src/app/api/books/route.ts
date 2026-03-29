@@ -17,6 +17,7 @@ function toBook(doc: {
   description?: string;
   genre?: string;
   tags?: string[];
+  summary?: string | null;
 }): Book {
   const normalizedStatus =
     doc.status === "ready" || doc.status === "READY"
@@ -41,6 +42,7 @@ function toBook(doc: {
     description: doc.description,
     genre: doc.genre,
     tags: doc.tags,
+    summary: doc.summary ?? null,
   };
 }
 
@@ -64,8 +66,13 @@ export async function GET(request: Request) {
       ];
     }
 
+    const limitParam = searchParams.get("limit");
+    const skipParam = searchParams.get("skip");
+    const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10)), 120) : (q ? 40 : 120);
+    const skip = skipParam ? Math.max(0, parseInt(skipParam, 10)) : 0;
+
     await connectToDatabase();
-    const docs = await BookModel.find(filter).sort({ createdAt: -1 }).limit(q ? 40 : 120).lean();
+    const docs = await BookModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
     const books: Book[] = docs.map((d) => toBook(d as Parameters<typeof toBook>[0]));
 
     // Sign cover URLs so S3 objects don't need to be public

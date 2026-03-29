@@ -6,6 +6,7 @@ export const createBookSchema = z.object({
   description: z.string().trim().max(3000).optional().default(""),
   genre: z.string().trim().max(120).optional().default(""),
   tags: z.array(z.string().trim().min(1).max(50)).max(20).optional().default([]),
+  summaryPrompt: z.string().trim().max(6000).optional().default(""),
   pdfUrl: z.string().url().optional(),
   coverUrl: z.string().url().optional(),
 });

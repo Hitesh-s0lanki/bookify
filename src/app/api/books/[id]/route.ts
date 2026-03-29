@@ -23,12 +23,14 @@ function toBook(doc: {
   coverUrl?: string;
   pdfUrl: string;
   voicePersona?: string;
+  vapiAssistantId?: string;
   status: string;
   createdAt?: Date;
   description?: string;
   genre?: string;
   tags?: string[];
   failureReason?: string;
+  summary?: string | null;
 }): Book {
   const normalizedStatus =
     doc.status === "ready" || doc.status === "READY"
@@ -48,12 +50,14 @@ function toBook(doc: {
     coverUrl: doc.coverUrl ?? "",
     pdfUrl: doc.pdfUrl,
     voicePersona: doc.voicePersona,
+    vapiAssistantId: doc.vapiAssistantId,
     status: normalizedStatus,
     createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
     description: doc.description,
     genre: doc.genre,
     tags: doc.tags,
     failureReason: doc.failureReason,
+    summary: doc.summary ?? null,
   };
 }
 
