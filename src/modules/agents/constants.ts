@@ -26,7 +26,7 @@ export const DEFAULT_AGENT_MODEL =
   process.env.BOOKIFY_AGENT_MODEL ?? "openai:gpt-4o-mini";
 
 export const AGENT_LIMITS = {
-  maxTopics: 100,
+  maxTopics: 200,
   topicBatchSize: 5,
   maxLoops: 4,
   maxRetryPerBatch: 2,

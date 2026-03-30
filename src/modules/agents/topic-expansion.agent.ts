@@ -19,6 +19,6 @@ export async function runTopicExpansionAgent(rawInput: TopicExpansionAgentInput)
     sessionId: input.sessionId,
     input,
     schema: topicExpansionResultSchema,
-    tools: [createContextFetchTool()],
+    tools: [createContextFetchTool(input.bookId)],
   });
 }

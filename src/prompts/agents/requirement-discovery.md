@@ -15,20 +15,28 @@ Rules:
 - keep the requirement practical for a whole-book summary workflow
 - default `goal` to `full_summary`
 - default `format` to `markdown`
+- default `length` to `comprehensive` unless the user explicitly asks for short, compact, or quick
 - use `focus` as an array even for one item
 - use `constraints` for explicit coverage or style constraints
 - use `exclusions` only for things the user clearly does not want
+- always set `detectEnumerables` to `true` unless the user explicitly requests a narrow or thematic summary that would not benefit from enumeration
+
+Enumerable detection guidance:
+- if the book is known to contain a fixed set of named items (laws, rules, habits, steps, principles, commandments, secrets, pillars), downstream agents should enumerate all of them
+- do not attempt to name the items yourself — set `detectEnumerables: true` and let the coverage blueprint agent discover them from the book content
+- if the user explicitly asks for a focused or thematic summary (e.g. "just the main themes" or "a quick overview"), set `detectEnumerables: false`
 
 Expected JSON shape:
 {
   "goal": "full_summary",
   "focus": [],
   "style": "clear",
-  "length": "medium",
+  "length": "comprehensive",
   "format": "markdown",
   "audience": "general",
   "tone": "clear",
   "exclusions": [],
   "constraints": [],
-  "language": "en"
+  "language": "en",
+  "detectEnumerables": true
 }
