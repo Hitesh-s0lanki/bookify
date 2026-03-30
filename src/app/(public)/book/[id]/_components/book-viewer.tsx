@@ -148,29 +148,34 @@ export function BookViewer({
     <div>
       <Card className="overflow-hidden border-border/60">
         <CardContent className="p-0">
-          {/* Cover + Title + Actions row */}
-          <div className="flex gap-3 p-4 sm:gap-6 sm:p-6">
-            {/* Cover */}
-            <div className="relative aspect-[3/4] w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-44">
-              <Image
-                src={coverSrc}
-                alt={`${book.title} cover`}
-                fill
-                className="object-contain p-1"
-                sizes="(max-width: 640px) 96px, 176px"
-                unoptimized
-                onError={() => setCoverSrc(FALLBACK_COVER)}
-              />
+          {/* Mobile: column layout. Desktop: row layout */}
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:gap-6 sm:p-6">
+
+            {/* Cover — centered on mobile, left-aligned on desktop */}
+            <div className="flex justify-center sm:block sm:shrink-0">
+              <div className="relative aspect-[3/4] w-36 overflow-hidden rounded-xl bg-muted shadow-md sm:w-44">
+                <Image
+                  src={coverSrc}
+                  alt={`${book.title} cover`}
+                  fill
+                  className="object-contain p-1"
+                  sizes="(max-width: 640px) 144px, 176px"
+                  unoptimized
+                  onError={() => setCoverSrc(FALLBACK_COVER)}
+                />
+              </div>
             </div>
 
-            {/* Title, author, actions */}
+            {/* Title, author, metadata, actions */}
             <div className="min-w-0 flex-1">
+
+              {/* Title row with action menu */}
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h1 className="line-clamp-2 text-base font-bold tracking-tight sm:text-2xl">
+                  <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                     {book.title}
                   </h1>
-                  <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {book.author}
                   </p>
                 </div>
@@ -225,75 +230,42 @@ export function BookViewer({
 
               <BookMetadata book={book} />
 
-              {/* Status / CTA — visible only on desktop next to title */}
-              <div className="hidden sm:block mt-3">
-                {isProcessing && (
-                  <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
-                    <Loader2 className="size-4 animate-spin text-amber-600 dark:text-amber-400" />
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                      Processing your book…
-                    </p>
-                  </div>
-                )}
-                {isFailed && (
-                  <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
-                    <AlertTriangle className="size-4 shrink-0 text-destructive" />
-                    <p className="text-sm text-destructive">
-                      Processing failed
-                      {book.failureReason ? ` — ${book.failureReason}` : ""}
-                    </p>
-                  </div>
-                )}
-                {isReady && (
-                  <Button
-                    className="gap-2 rounded-full"
-                    onClick={async () => {
-                      const allowed = onCheckAccess ? await onCheckAccess() : true;
-                      if (allowed) window.location.href = `/preview/${book.id}`;
-                    }}
-                  >
-                    <Eye className="size-4" />
-                    Preview & Chat
-                  </Button>
-                )}
-              </div>
+              {/* Status / CTA — same layout on all screen sizes */}
+              {(isProcessing || isFailed || isReady) && (
+                <div className="space-y-2">
+                  {isProcessing && (
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
+                      <Loader2 className="size-4 shrink-0 animate-spin text-amber-600 dark:text-amber-400" />
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        Processing your book…
+                      </p>
+                    </div>
+                  )}
+                  {isFailed && (
+                    <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+                      <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                      <p className="text-sm text-destructive">
+                        Processing failed
+                        {book.failureReason ? ` — ${book.failureReason}` : ""}
+                      </p>
+                    </div>
+                  )}
+                  {isReady && (
+                    <Button
+                      className="w-full gap-2 rounded-full sm:w-auto"
+                      onClick={async () => {
+                        const allowed = onCheckAccess ? await onCheckAccess() : true;
+                        if (allowed) window.location.href = `/preview/${book.id}`;
+                      }}
+                    >
+                      <Eye className="size-4" />
+                      Preview & Chat
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Status / CTA — mobile only */}
-          {(isProcessing || isFailed || isReady) && (
-            <div className="space-y-2 px-4 pb-4 sm:hidden">
-              {isProcessing && (
-                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
-                  <Loader2 className="size-4 shrink-0 animate-spin text-amber-600 dark:text-amber-400" />
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Processing your book…
-                  </p>
-                </div>
-              )}
-              {isFailed && (
-                <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
-                  <AlertTriangle className="size-4 shrink-0 text-destructive" />
-                  <p className="text-sm text-destructive">
-                    Processing failed
-                    {book.failureReason ? ` — ${book.failureReason}` : ""}
-                  </p>
-                </div>
-              )}
-              {isReady && (
-                <Button
-                  className="w-full gap-2 rounded-full"
-                  onClick={async () => {
-                    const allowed = onCheckAccess ? await onCheckAccess() : true;
-                    if (allowed) window.location.href = `/preview/${book.id}`;
-                  }}
-                >
-                  <Eye className="size-4" />
-                  Preview & Chat
-                </Button>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
 
