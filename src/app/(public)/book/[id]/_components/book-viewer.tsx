@@ -149,15 +149,15 @@ export function BookViewer({
       <Card className="overflow-hidden border-border/60">
         <CardContent className="p-0">
           {/* Cover + Title + Actions row */}
-          <div className="flex gap-4 p-4 sm:gap-6 sm:p-6">
+          <div className="flex gap-3 p-4 sm:gap-6 sm:p-6">
             {/* Cover */}
-            <div className="relative w-58 shrink-0 overflow-hidden rounded-sm bg-muted">
+            <div className="relative aspect-[3/4] w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:w-44">
               <Image
                 src={coverSrc}
                 alt={`${book.title} cover`}
                 fill
-                className="object-center border"
-                sizes="(max-width: 640px) 96px, 160px"
+                className="object-contain p-1"
+                sizes="(max-width: 640px) 96px, 176px"
                 unoptimized
                 onError={() => setCoverSrc(FALLBACK_COVER)}
               />
@@ -167,10 +167,10 @@ export function BookViewer({
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h1 className="text-lg font-bold tracking-tight sm:text-2xl">
+                  <h1 className="line-clamp-2 text-base font-bold tracking-tight sm:text-2xl">
                     {book.title}
                   </h1>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
+                  <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
                     {book.author}
                   </p>
                 </div>
@@ -226,7 +226,7 @@ export function BookViewer({
               <BookMetadata book={book} />
 
               {/* Status / CTA — visible only on desktop next to title */}
-              <div className="hidden sm:block">
+              <div className="hidden sm:block mt-3">
                 {isProcessing && (
                   <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
                     <Loader2 className="size-4 animate-spin text-amber-600 dark:text-amber-400" />
@@ -246,7 +246,7 @@ export function BookViewer({
                 )}
                 {isReady && (
                   <Button
-                    className="gap-2"
+                    className="gap-2 rounded-full"
                     onClick={async () => {
                       const allowed = onCheckAccess ? await onCheckAccess() : true;
                       if (allowed) window.location.href = `/preview/${book.id}`;
@@ -262,24 +262,27 @@ export function BookViewer({
 
           {/* Status / CTA — mobile only */}
           {(isProcessing || isFailed || isReady) && (
-            <div className="px-4 pb-4 sm:hidden">
+            <div className="space-y-2 px-4 pb-4 sm:hidden">
               {isProcessing && (
                 <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
-                  <Loader2 className="size-4 animate-spin text-amber-600 dark:text-amber-400" />
+                  <Loader2 className="size-4 shrink-0 animate-spin text-amber-600 dark:text-amber-400" />
                   <p className="text-sm text-amber-700 dark:text-amber-300">
-                    Processing…
+                    Processing your book…
                   </p>
                 </div>
               )}
               {isFailed && (
                 <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
                   <AlertTriangle className="size-4 shrink-0 text-destructive" />
-                  <p className="text-sm text-destructive">Failed</p>
+                  <p className="text-sm text-destructive">
+                    Processing failed
+                    {book.failureReason ? ` — ${book.failureReason}` : ""}
+                  </p>
                 </div>
               )}
               {isReady && (
                 <Button
-                  className="w-full gap-2"
+                  className="w-full gap-2 rounded-full"
                   onClick={async () => {
                     const allowed = onCheckAccess ? await onCheckAccess() : true;
                     if (allowed) window.location.href = `/preview/${book.id}`;

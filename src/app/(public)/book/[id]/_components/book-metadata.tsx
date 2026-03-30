@@ -24,8 +24,8 @@ export function BookMetadata({ book, className }: BookMetadataProps) {
   );
 
   return (
-    <div className={cn("space-y-4 py-4", className)}>
-      <div className="grid gap-3 rounded-xl border bg-muted/20 p-4 ">
+    <div className={cn("space-y-4 py-3 sm:py-4", className)}>
+      <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:p-4">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Uploaded
