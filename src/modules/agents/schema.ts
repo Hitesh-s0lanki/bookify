@@ -50,9 +50,9 @@ export const coverageBlueprintSchema = z.object({
   enumerables: z
     .object({
       detected: z.boolean(),
-      type: z.string(),
-      count: z.number().int().nonnegative(),
-      label: z.string(),
+      type: z.string().optional(),
+      count: z.number().int().nonnegative().optional(),
+      label: z.string().optional(),
     })
     .optional(),
 });
