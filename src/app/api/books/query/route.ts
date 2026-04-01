@@ -20,7 +20,7 @@ const querySchema = z.object({
 
 type QueryRequest = z.infer<typeof querySchema>;
 
-export async function handleQueryRequest(payload: QueryRequest) {
+async function handleQueryRequest(payload: QueryRequest) {
   const queryEmbedding = await generateQueryEmbedding(payload.question);
   const chunks = await searchBookChunks({
     bookId: payload.bookId,

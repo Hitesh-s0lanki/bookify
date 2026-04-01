@@ -79,20 +79,42 @@ export async function invokeBookifyAgent({
   return output;
 }
 
+const MAX_JSON_RETRIES = 2;
+
 export async function invokeBookifyJsonAgent<T>(
   options: InvokeBookifyAgentOptions & { schema: ZodType<T> }
 ) {
-  const output = await invokeBookifyAgent(options);
+  let lastOutput = "";
+  let lastError: unknown;
 
-  try {
-    return parseAgentJson(output, options.schema);
-  } catch (error) {
-    const preview = output.slice(0, 800);
-    const message =
-      error instanceof Error ? error.message : "Unknown JSON parsing error.";
+  for (let attempt = 0; attempt <= MAX_JSON_RETRIES; attempt++) {
+    const output = await invokeBookifyAgent(options);
+    lastOutput = output;
 
-    throw new Error(
-      `${options.agentName} returned invalid JSON. ${message}\nResponse preview:\n${preview}`
-    );
+    try {
+      return parseAgentJson(output, options.schema);
+    } catch (error) {
+      lastError = error;
+      // If the response looks like a tool/system error rather than a content
+      // error, retry — don't count it as a genuine agent failure.
+      const looksLikeToolError =
+        output.trimStart().startsWith("Error:") ||
+        output.includes("write_todos") ||
+        output.includes("tool should never be called");
+
+      if (attempt < MAX_JSON_RETRIES && looksLikeToolError) {
+        continue;
+      }
+
+      break;
+    }
   }
+
+  const preview = lastOutput.slice(0, 800);
+  const message =
+    lastError instanceof Error ? lastError.message : "Unknown JSON parsing error.";
+
+  throw new Error(
+    `${options.agentName} returned invalid JSON. ${message}\nResponse preview:\n${preview}`
+  );
 }

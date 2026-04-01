@@ -39,7 +39,8 @@ function chunkPageText(pageText: string, bookId: string, page: number): ChunkRes
 }
 
 export function chunkTextByPages({ text, bookId }: { text: string; bookId: string }): ChunkResult[] {
-  const pages = text.split("\f");
+  // Strip null bytes — PostgreSQL UTF-8 rejects \x00 (error 22021)
+  const pages = text.replace(/\x00/g, "").split("\f");
   const allChunks: ChunkResult[] = [];
 
   for (let i = 0; i < pages.length; i++) {
