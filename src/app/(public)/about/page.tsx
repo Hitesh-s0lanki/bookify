@@ -1,39 +1,61 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, Headphones, MessageCircle, Sparkles, Github, Linkedin, Globe } from "lucide-react";
+import {
+  BookOpen,
+  Headphones,
+  MessageCircle,
+  Sparkles,
+  Github,
+  Linkedin,
+  Globe,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About — Bookify",
-  description: "An AI-powered reading platform — upload any PDF, chat with it, listen to it, and get deep insights.",
+  description:
+    "An AI-powered reading platform — upload any PDF, chat with it, listen to it, and get deep insights.",
 };
 
 const features = [
   {
     icon: BookOpen,
     title: "Smart Reading",
-    description: "Upload any PDF and read it with a clean, distraction-free interface.",
+    description:
+      "Upload any PDF and read it with a clean, distraction-free interface.",
   },
   {
     icon: MessageCircle,
     title: "Chat with Books",
-    description: "Ask questions about any book and get accurate, AI-powered answers instantly.",
+    description:
+      "Ask questions about any book and get accurate, AI-powered answers instantly.",
   },
   {
     icon: Headphones,
     title: "Voice Conversations",
-    description: "Listen to summaries and have spoken conversations with your books.",
+    description:
+      "Listen to summaries and have spoken conversations with your books.",
   },
   {
     icon: Sparkles,
     title: "AI Insights",
-    description: "Get key takeaways, chapter summaries, and deep analysis automatically.",
+    description:
+      "Get key takeaways, chapter summaries, and deep analysis automatically.",
   },
 ];
 
 const techStack = [
-  "Next.js", "TypeScript", "React", "Tailwind CSS",
-  "MongoDB", "PostgreSQL", "LangChain", "Google Gemini",
-  "AWS S3", "Clerk", "Vapi AI", "Inngest",
+  "Next.js",
+  "TypeScript",
+  "React",
+  "Tailwind CSS",
+  "MongoDB",
+  "PostgreSQL",
+  "LangChain",
+  "Google Gemini",
+  "AWS S3",
+  "Clerk",
+  "Vapi AI",
+  "Inngest",
 ];
 
 const socials = [
@@ -50,20 +72,17 @@ const socials = [
   {
     icon: Globe,
     label: "Portfolio",
-    href: "https://hitesh-solanki.vercel.app",
+    href: "https://master.d2p4p6tfmpfvri.amplifyapp.com/",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-12">
+    <div className="mx-auto max-w-5xl space-y-12 py-10">
       {/* Header */}
       <header className="space-y-3 text-center">
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-          About{" "}
-          <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent">
-            Bookify
-          </span>
+          About <span className="text-primary">Bookify</span>
         </h1>
         <p className="mx-auto max-w-lg text-muted-foreground">
           An AI-powered reading platform — upload any PDF, chat with it, listen
@@ -77,7 +96,7 @@ export default function AboutPage() {
         <h2 className="mb-6 text-lg font-semibold">Built by</h2>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           {/* Avatar */}
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-rose-500 text-xl font-bold text-white">
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
             HS
           </div>
 
