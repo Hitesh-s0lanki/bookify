@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Github } from "lucide-react";
 
 const links = [
   { href: "/terms", label: "Terms" },
@@ -28,6 +29,15 @@ export function Footer() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="https://github.com/Hitesh-s0lanki/bookify"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Github className="size-4" aria-hidden="true" />
+            GitHub
+          </Link>
         </nav>
       </div>
     </footer>
