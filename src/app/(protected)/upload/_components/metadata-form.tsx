@@ -248,20 +248,14 @@ export function MetadataForm() {
         {/* Step 2 — Extraction */}
         <FormSection className="order-2 h-full md:order-1 md:col-span-2">
           {isExtracting && (
-            <div className="flex items-center gap-4 rounded-xl bg-primary/10 px-4 py-4 dark:bg-primary/15 h-full ">
-              <span className="relative flex size-2.5 shrink-0">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/50 opacity-75" />
-                <span className="relative inline-flex size-2.5 rounded-full bg-primary ring-2 ring-primary/30" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">
-                  Analyzing your book with AI…
-                </p>
+            <div className="flex h-full flex-col items-center justify-center gap-3">
+              <Loader2 className="size-5 animate-spin text-primary" />
+              <div className="text-center">
+                <p className="text-sm font-medium text-foreground">Analyzing your book</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Extracting title, author, description, genre & tags
                 </p>
               </div>
-              <Loader2 className="size-5 shrink-0 animate-spin text-primary" />
             </div>
           )}
 

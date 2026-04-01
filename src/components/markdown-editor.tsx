@@ -27,19 +27,18 @@ export function MarkdownEditor({
   height = "32rem",
   maxLength,
   id,
-  label = "Description",
 }: MarkdownEditorProps) {
   return (
     <div
       className="overflow-hidden rounded-md border border-input relative "
       style={{ height }}
     >
-      <Tabs defaultValue="code" className="gap-0 h-full px-2 py-5">
+      <Tabs defaultValue="preview" className="gap-0 h-full px-2 py-5">
         {/* Header bar */}
         <div className="flex items-center justify-end absolute right-4 top-4 gap-2">
-          {label && (
+          {/* {label && (
             <span className="text-xs text-muted-foreground">{label}</span>
-          )}
+          )} */}
           <TabsList className="rounded-full max-h-8">
             <TabsTrigger
               value="code"
@@ -69,7 +68,7 @@ export function MarkdownEditor({
             disabled={disabled}
             maxLength={maxLength}
             className={cn(
-              "h-full w-full resize-none bg-transparent px-3 py-2 text-sm",
+              "h-full w-full resize-none bg-transparent px-3 py-10 text-sm",
               "placeholder:text-muted-foreground outline-none",
               "overflow-y-auto",
               disabled && "cursor-not-allowed opacity-50",

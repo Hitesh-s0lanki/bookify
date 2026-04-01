@@ -10,11 +10,11 @@ import {
   Menu,
   LogOut,
   Search,
-  Sparkles,
   ChevronRight,
   CreditCard,
   X,
   House,
+  Upload,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -184,9 +184,7 @@ export function Navbar() {
               >
                 <SheetHeader className="border-b px-4 py-3">
                   <SheetTitle className="flex items-center gap-2">
-                    <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
-                      <Sparkles className="size-3.5 text-primary" />
-                    </div>
+                    <Image src="/logo.png" alt="Bookify" width={26} height={26} />
                     <span className="text-sm font-bold text-primary">
                       Bookify
                     </span>
@@ -237,6 +235,23 @@ export function Navbar() {
                       </SheetClose>
                     );
                   })}
+                  {isSignedIn && (
+                    <SheetClose asChild>
+                      <Link
+                        href="/upload"
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+                          isActive("/upload")
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <Upload className="size-4" />
+                        <span className="flex-1">Upload Book</span>
+                        <ChevronRight className="size-3.5 opacity-30" />
+                      </Link>
+                    </SheetClose>
+                  )}
                 </nav>
 
                 {/* Sign out */}
