@@ -4,6 +4,7 @@ import { BookOpen, Headphones, MessageCircle, Sparkles, Github, Linkedin, Globe 
 
 export const metadata: Metadata = {
   title: "About — Bookify",
+  description: "An AI-powered reading platform — upload any PDF, chat with it, listen to it, and get deep insights.",
 };
 
 const features = [
@@ -104,7 +105,7 @@ export default function AboutPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
                 >
-                  <Icon className="size-3.5" />
+                  <Icon className="size-3.5" aria-hidden="true" />
                   {label}
                 </Link>
               ))}
@@ -140,7 +141,7 @@ export default function AboutPage() {
                 className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
               >
                 <div className="mb-3 inline-flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Icon className="size-5 text-primary" />
+                  <Icon className="size-5 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="font-semibold">{feature.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
