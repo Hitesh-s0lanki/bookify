@@ -97,16 +97,21 @@ export async function getOrCreateStripeCustomer(params: {
   const { userId, email, name, stripeCustomerId } = params;
 
   if (stripeCustomerId) {
-    const existingCustomer = await stripe.customers.retrieve(stripeCustomerId);
-    if (!("deleted" in existingCustomer) || existingCustomer.deleted !== true) {
-      if (email || name) {
-        await stripe.customers.update(existingCustomer.id, {
-          email: email || undefined,
-          name: name || undefined,
-        });
+    try {
+      const existingCustomer = await stripe.customers.retrieve(stripeCustomerId);
+      if (!("deleted" in existingCustomer) || existingCustomer.deleted !== true) {
+        if (email || name) {
+          await stripe.customers.update(existingCustomer.id, {
+            email: email || undefined,
+            name: name || undefined,
+          });
+        }
+        return existingCustomer;
       }
-
-      return existingCustomer;
+    } catch (err) {
+      const stripeErr = err as { code?: string };
+      if (stripeErr?.code !== "resource_missing") throw err;
+      // Customer was hard-deleted in Stripe — fall through to create a new one
     }
   }
 

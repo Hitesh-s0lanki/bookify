@@ -53,12 +53,11 @@ export async function GET(request: NextRequest) {
         syncedUser?.stripeSubscriptionStatus ??
         user.stripeSubscriptionStatus ??
         null,
-      plan: "pro",
+      plan: syncedUser?.plan ?? user.plan ?? "free",
       accessGranted:
-        syncedUser?.plan === "pro" ||
-        user.plan === "pro" ||
-        session.payment_status === "paid" ||
-        session.payment_status === "no_payment_required",
+        session.status === "complete" &&
+        (session.payment_status === "paid" || session.payment_status === "no_payment_required") &&
+        (syncedUser?.plan === "pro" || user.plan === "pro"),
     });
   } catch (error) {
     console.error("GET /api/billing/session-status", error);

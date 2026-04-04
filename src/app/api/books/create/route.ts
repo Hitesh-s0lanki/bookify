@@ -4,13 +4,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { connectToDatabase } from "@/lib/db";
+import { FREE_PLAN_BOOK_LIMIT } from "@/lib/constants";
 import { triggerBookUploadedEvent } from "@/lib/inngest/trigger";
 import { generatePresignedUrl, getPublicS3Url, uploadFile } from "@/lib/api/s3";
 import { BookModel } from "@/modules/books/model";
 import { UserModel } from "@/modules/user/model";
 import { createBookSchema } from "@/modules/books/schema";
-
-const FREE_PLAN_BOOK_LIMIT = 2;
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 const ALLOWED_COVER_TYPES = new Set(["image/jpeg", "image/jpg", "image/png"]);
@@ -125,6 +124,17 @@ export async function POST(request: Request) {
         { error: "Provide PDF and cover files or valid pdfUrl/coverUrl." },
         { status: 400 }
       );
+    }
+
+    // Re-verify limit immediately before write to minimize race window
+    if (!user || user.plan !== "pro") {
+      const finalCount = await BookModel.countDocuments({ userId });
+      if (finalCount >= FREE_PLAN_BOOK_LIMIT) {
+        return NextResponse.json(
+          { error: `Free plan is limited to ${FREE_PLAN_BOOK_LIMIT} books. Upgrade to Pro for unlimited books.`, limitReached: true },
+          { status: 402 }
+        );
+      }
     }
 
     await BookModel.create({

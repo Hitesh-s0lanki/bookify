@@ -5,15 +5,14 @@ import { useEffect, useState } from "react";
 import { Zap, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
-const FREE_PLAN_BOOK_LIMIT = 2;
+import { FREE_PLAN_BOOK_LIMIT } from "@/lib/constants";
 
 interface UploadPlanGateProps {
   children: React.ReactNode;
 }
 
 export function UploadPlanGate({ children }: UploadPlanGateProps) {
-  const [status, setStatus] = useState<"loading" | "allowed" | "blocked">("loading");
+  const [status, setStatus] = useState<"loading" | "allowed" | "blocked" | "error">("loading");
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +29,7 @@ export function UploadPlanGate({ children }: UploadPlanGateProps) {
         setStatus(isPro || bookCount < FREE_PLAN_BOOK_LIMIT ? "allowed" : "blocked");
       })
       .catch(() => {
-        if (!cancelled) setStatus("allowed"); // allow on error — API will re-check
+        if (!cancelled) setStatus("error");
       });
 
     return () => {
@@ -72,6 +71,19 @@ export function UploadPlanGate({ children }: UploadPlanGateProps) {
             <Link href="/">Back to Library</Link>
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          Could not verify your plan. Please refresh the page to try again.
+        </p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Refresh
+        </Button>
       </div>
     );
   }

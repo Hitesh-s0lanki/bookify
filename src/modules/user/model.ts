@@ -28,6 +28,7 @@ const userSchema = new Schema(
     stripeCustomerId: {
       type: String,
       default: null,
+      index: true,
     },
     stripeSubscriptionId: {
       type: String,

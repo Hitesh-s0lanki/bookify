@@ -172,7 +172,7 @@ export function BillingSuccessPage() {
                 <CardDescription className="mt-2 max-w-xl text-sm leading-6">
                   {isComplete && isPaid
                     ? "Your Bookify account has been upgraded. You can head back into the app and start using Pro features right away."
-                    : "We&apos;ve received your checkout session, but the final payment confirmation is still pending. You can refresh this page in a moment."}
+                    : "We've received your checkout session, but the final payment confirmation is still pending. You can refresh this page in a moment."}
                 </CardDescription>
               </div>
             </div>
