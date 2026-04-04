@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CoverUpload } from "@/app/(protected)/upload/_components/cover-upload";
 import { PdfUpload } from "@/app/(protected)/upload/_components/pdf-upload";
 import { MarkdownEditor } from "@/components/markdown-editor";
+import { UpgradeModal } from "@/components/gates/UpgradeModal";
 import { DEFAULT_BOOK_SUMMARY_REQUEST } from "@/modules/summary/default-request";
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
@@ -66,6 +67,7 @@ export function MetadataForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [extracted, setExtracted] = useState(false);
   const [extractionFailed, setExtractionFailed] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [summaryPrompt, setSummaryPrompt] = useState(
     DEFAULT_BOOK_SUMMARY_REQUEST,
   );
@@ -206,7 +208,13 @@ export function MetadataForm() {
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as {
           error?: string;
+          limitReached?: boolean;
         } | null;
+        if (data?.limitReached) {
+          setShowUpgradeModal(true);
+          setIsUploading(false);
+          return;
+        }
         throw new Error(data?.error ?? "Failed to upload book.");
       }
 
@@ -243,6 +251,8 @@ export function MetadataForm() {
   const hasMetadata = extracted && metadata.title;
 
   return (
+    <>
+    <UpgradeModal open={showUpgradeModal} onOpenChange={setShowUpgradeModal} />
     <div className="space-y-0">
       <div className="grid grid-cols-1 gap-5 p-3 sm:p-5 md:grid-cols-3">
         {/* Step 2 — Extraction */}
@@ -406,5 +416,6 @@ export function MetadataForm() {
         </div>
       )}
     </div>
+    </>
   );
 }

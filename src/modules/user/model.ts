@@ -29,6 +29,14 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    stripeSubscriptionId: {
+      type: String,
+      default: null,
+    },
+    stripeSubscriptionStatus: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
