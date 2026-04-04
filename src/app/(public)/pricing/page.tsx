@@ -9,13 +9,13 @@ import {
   Headphones,
   Brain,
   Sparkles,
-  ArrowRight,
   Shield,
   ChevronDown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PlanCtaButton } from "@/components/billing/plan-cta-button";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -33,11 +33,10 @@ const PLANS = [
     period: "forever",
     description: "Perfect for casual readers getting started.",
     cta: "Get Started Free",
-    href: "/sign-up",
     highlight: false,
     badge: null,
     features: [
-      "Up to 5 e-books",
+      "Up to 2 e-books",
       "10 AI chat messages per book",
       "3 voice summaries per month",
       "Basic PDF support",
@@ -51,7 +50,6 @@ const PLANS = [
     period: "per month",
     description: "For avid readers who want the full AI experience.",
     cta: "Upgrade to Pro",
-    href: "/sign-up",
     highlight: true,
     badge: "Most Popular",
     features: [
@@ -74,7 +72,7 @@ const COMPARE_ROWS: {
   free: string | boolean;
   pro: string | boolean;
 }[] = [
-  { icon: BookOpen, feature: "E-book library", free: "Up to 5 books", pro: "Unlimited" },
+  { icon: BookOpen, feature: "E-book library", free: "Up to 2 books", pro: "Unlimited" },
   { icon: MessageCircle, feature: "AI chat messages", free: "10 / book", pro: "Unlimited" },
   { icon: Headphones, feature: "Voice summaries", free: "3 / month", pro: "Unlimited" },
   { icon: Brain, feature: "Deep AI insights", free: false, pro: true },
@@ -215,16 +213,12 @@ export default function PricingPage() {
           No credit card required. Free plan available forever.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Button
-            asChild
+          <PlanCtaButton
+            planId="free"
+            cta="Get Started Free"
             size="lg"
             className="gap-2 rounded-full px-6 shadow-lg shadow-primary/20"
-          >
-            <Link href="/sign-up">
-              Get Started Free
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
+          />
           <Button asChild variant="ghost" size="lg" className="rounded-full px-5">
             <Link href="/upload">Try Uploading a Book</Link>
           </Button>
@@ -299,17 +293,16 @@ function PlanCard({
       </ul>
 
       {/* CTA */}
-      <Button
-        asChild
+      <PlanCtaButton
+        planId={plan.id}
+        cta={plan.cta}
         size="lg"
         variant={plan.highlight ? "default" : "outline"}
         className={cn(
           "mt-6 w-full rounded-full",
           plan.highlight && "shadow-md shadow-primary/20"
         )}
-      >
-        <Link href={plan.href}>{plan.cta}</Link>
-      </Button>
+      />
     </div>
   );
 }

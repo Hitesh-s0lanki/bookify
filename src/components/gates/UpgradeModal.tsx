@@ -26,15 +26,15 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
         </div>
 
         <DialogHeader className="items-center">
-          <DialogTitle>You&apos;ve reached your 5-book limit</DialogTitle>
+          <DialogTitle>You&apos;ve reached your 2-book limit</DialogTitle>
           <DialogDescription className="text-center">
-            Upgrade to Pro for unlimited books, unlimited AI chat, and priority processing.
+            Free plan allows up to 2 books. Upgrade to Pro for unlimited books, unlimited AI chat, and priority processing.
           </DialogDescription>
         </DialogHeader>
 
         <div className="mt-2 flex flex-col gap-2.5">
           <Button asChild className="w-full gap-2 rounded-full shadow-md shadow-primary/20">
-            <Link href="/pricing">
+            <Link href="/billing/checkout">
               <Zap className="size-4" />
               Upgrade to Pro
             </Link>

@@ -4,9 +4,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { connectToDatabase } from "@/lib/db";
+import { FREE_PLAN_BOOK_LIMIT } from "@/lib/constants";
 import { triggerBookUploadedEvent } from "@/lib/inngest/trigger";
 import { generatePresignedUrl, getPublicS3Url, uploadFile } from "@/lib/api/s3";
 import { BookModel } from "@/modules/books/model";
+import { UserModel } from "@/modules/user/model";
 import { createBookSchema } from "@/modules/books/schema";
 
 const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
@@ -37,6 +39,19 @@ export async function POST(request: Request) {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectToDatabase();
+
+    const user = await UserModel.findOne({ clerkId: userId }).select("plan").lean();
+    if (!user || user.plan !== "pro") {
+      const bookCount = await BookModel.countDocuments({ userId });
+      if (bookCount >= FREE_PLAN_BOOK_LIMIT) {
+        return NextResponse.json(
+          { error: `Free plan is limited to ${FREE_PLAN_BOOK_LIMIT} books. Upgrade to Pro for unlimited books.`, limitReached: true },
+          { status: 402 }
+        );
+      }
     }
 
     const contentType = request.headers.get("content-type") ?? "";
@@ -111,7 +126,16 @@ export async function POST(request: Request) {
       );
     }
 
-    await connectToDatabase();
+    // Re-verify limit immediately before write to minimize race window
+    if (!user || user.plan !== "pro") {
+      const finalCount = await BookModel.countDocuments({ userId });
+      if (finalCount >= FREE_PLAN_BOOK_LIMIT) {
+        return NextResponse.json(
+          { error: `Free plan is limited to ${FREE_PLAN_BOOK_LIMIT} books. Upgrade to Pro for unlimited books.`, limitReached: true },
+          { status: 402 }
+        );
+      }
+    }
 
     await BookModel.create({
       _id: bookId,

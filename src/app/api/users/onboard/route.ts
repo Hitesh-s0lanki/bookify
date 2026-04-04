@@ -1,8 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { connectToDatabase } from "@/lib/db";
-import { UserModel } from "@/modules/user/model";
+import { ensureUserRecord } from "@/modules/user/service";
 
 export async function POST() {
   try {
@@ -11,18 +10,12 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectToDatabase();
+    const clerkUser = await currentUser();
+    const { created } = await ensureUserRecord({ clerkId: userId, clerkUser });
 
-    const existing = await UserModel.findOne({ clerkId: userId }).lean();
-    if (existing) {
+    if (!created) {
       return NextResponse.json({ alreadyExists: true });
     }
-
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress ?? "";
-    const name = clerkUser?.fullName ?? clerkUser?.firstName ?? "";
-
-    await UserModel.create({ clerkId: userId, email, name, plan: "free" });
 
     return NextResponse.json({ success: true });
   } catch (e) {

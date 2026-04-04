@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
@@ -27,7 +28,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { CustomUserMenu } from "@/components/layout/custom-user-menu";
+const CustomUserMenu = dynamic(
+  () => import("@/components/layout/custom-user-menu").then((m) => m.CustomUserMenu),
+  { ssr: false }
+);
 import { GenerateAvatar } from "@/components/ui/generate-avatar";
 import { cn } from "@/lib/utils";
 
