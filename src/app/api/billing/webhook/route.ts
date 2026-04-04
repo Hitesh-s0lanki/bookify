@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { connectToDatabase } from "@/lib/db";
 import {
   getStripe,
   getStripeWebhookSecret,
@@ -37,6 +38,8 @@ export async function POST(request: Request) {
       signature,
       getStripeWebhookSecret()
     );
+
+    await connectToDatabase();
 
     switch (event.type) {
       case "checkout.session.completed":
